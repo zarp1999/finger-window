@@ -10,6 +10,7 @@ export function MediaPanel({content,live,t}:Props) {
     {content.error&&<p className="status error" role="alert">{t(content.error)}</p>}
     {content.media&&<><p className="media-name">{content.media.name}</p><div className="media-actions">
       {content.media.kind==='video'&&<button className="secondary" id="mediaPlay" disabled={!live} onClick={content.toggle}>{t(content.playing&&live?'pauseMedia':'playMedia')}</button>}
+      {content.media.kind==='video'&&<button className="secondary" id="mediaAudio" aria-pressed={!content.muted} onClick={content.toggleAudio}>{t(content.muted?'audioOn':'audioOff')}</button>}
       <button className="secondary" id="clearMedia" onClick={content.clear}>{t('cameraEffects')}</button>
     </div><p className="note">{t('mediaGestureNote')}</p></>}
   </section>;
