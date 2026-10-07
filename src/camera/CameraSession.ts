@@ -34,24 +34,24 @@ export class CameraSession {
   async start(): Promise<void> {
     if (this.disposed || this.state.phase === 'live' || this.state.phase === 'loading') return;
     const request = ++this.generation;
-    this.publish({ phase: 'loading', message: 'カメラへのアクセスを許可してください' });
+    this.publish({ phase: 'loading', message: 'permission' });
     try {
-      const active = await this.source.start(() => { if (request === this.generation) this.fail('カメラが切断されました。再接続して開始してください。'); });
+      const active = await this.source.start(() => { if (request === this.generation) this.fail('disconnected'); });
       if (!active || request !== this.generation || this.disposed) return;
-      this.publish({ message: '手の追跡を読み込んでいます · 初回は少し時間がかかります' });
+      this.publish({ message: 'modelLoading' });
       await this.tracker.load();
       if (request !== this.generation || this.disposed) return;
       this.renderer.resize(this.video); this.tracker.reset(); this.hands = [];
       this.lastVideo = -1; this.lastDetection = 0; this.fpsFrames = 0; this.fpsTime = performance.now();
-      this.publish({ phase: 'live', message: '両手をカメラに映してください' });
+      this.publish({ phase: 'live', message: 'showHands' });
       this.frameId = requestAnimationFrame(this.render);
     } catch (error) { if (request === this.generation && !this.disposed) this.fail(cameraErrorMessage(error)); }
   }
   stop(): void {
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.renderer.clear(); this.publish({ ...INITIAL_STATE, message: 'カメラを停止しました' });
+    this.renderer.clear(); this.publish({ ...INITIAL_STATE, message: 'cameraStopped' });
   }
-  private fail(message: string): void { this.stop(); this.publish({ phase: 'error', message }); }
+  private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {
     if (this.disposed || this.state.phase !== 'live') return;
     try {
@@ -63,14 +63,14 @@ export class CameraSession {
         const visible = this.renderer.render(this.video,this.hands,this.settings);
         const count = this.hands.length;
         this.publish({ hands: count,
-          message: count === 2 ? (visible ? '追跡中 · 指先で窓を動かせます' : '親指と人差し指をもう少し開いてください') : count ? '片手を検出 · もう片方の手も映してください' : '手を探しています · 手全体を明るく映してください',
-          hint: count === 2 ? (visible ? '両手の指先に窓が追従しています' : '指を開いて、窓を広げてください') : count ? 'もう片方の手を映してください' : '両手の親指と人差し指を開いてください',
+          message: count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
+          hint: count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',
         });
         this.fpsFrames++;
         if (time-this.fpsTime > 1000) { this.publish({ fps: Math.round(this.fpsFrames*1000/(time-this.fpsTime)) });this.fpsFrames=0;this.fpsTime=time; }
       }
       this.frameId = requestAnimationFrame(this.render);
-    } catch { this.fail('追跡処理が止まりました。カメラを再開してください。'); }
+    } catch { this.fail('trackingError'); }
   };
   dispose(): void { this.disposed = true; this.stop(); this.tracker.dispose(); this.renderer.dispose(); }
 }

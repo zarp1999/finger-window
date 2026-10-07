@@ -1,3 +1,4 @@
+import type { TranslationKey } from '../i18n';
 /** Owns camera tracks. Late permission responses are released after cancellation. */
 export class CameraSource {
   private stream: MediaStream | null = null;
@@ -27,13 +28,13 @@ export class CameraSource {
   }
 }
 
-export function cameraErrorMessage(error: unknown): string {
+export function cameraErrorMessage(error: unknown): TranslationKey {
   const name = error instanceof Error ? error.name : '';
-  const messages: Record<string, string> = {
-    NotAllowedError: 'カメラが許可されていません。ブラウザのサイト設定でカメラを許可し、再試行してください。',
-    NotFoundError: 'カメラが見つかりません。Webカメラを接続してください。',
-    NotReadableError: 'カメラを使用できません。他のカメラアプリを閉じて再試行してください。',
-    InsecureContext: 'カメラを使うにはHTTPSまたはlocalhostで開いてください。',
+  const messages: Record<string, TranslationKey> = {
+    NotAllowedError: 'denied',
+    NotFoundError: 'notFound',
+    NotReadableError: 'notReadable',
+    InsecureContext: 'insecure',
   };
-  return messages[name] ?? '読み込みに失敗しました。ネット接続を確認して、もう一度お試しください。';
+  return messages[name] ?? 'loadError';
 }
