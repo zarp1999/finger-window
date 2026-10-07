@@ -5,6 +5,10 @@ export function isEffect(value: unknown): value is Effect { return EFFECTS.some(
 export interface Point { x: number; y: number }
 export interface Landmark extends Point { z: number }
 export type Hand = Landmark[];
+export interface WindowMedia {
+  kind: 'image' | 'video'; element: HTMLImageElement | HTMLVideoElement;
+  url: string; name: string; width: number; height: number;
+}
 export interface Settings { effect: Effect; mirror: boolean; showSkeleton: boolean }
 export interface CameraState {
   phase: 'idle' | 'loading' | 'live' | 'error';

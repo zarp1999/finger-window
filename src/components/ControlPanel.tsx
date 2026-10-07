@@ -1,12 +1,14 @@
 import { EFFECTS } from '../types';
+import type { ReactNode } from 'react';
 import type { CameraState, Settings } from '../types';
 import type { TranslationKey } from '../i18n';
 
-interface Props { settings: Settings; state: CameraState; onSettings: (settings: Settings) => void; onStop: () => void; t: (key: TranslationKey)=>string }
+interface Props { settings: Settings; state: CameraState; onSettings: (settings: Settings) => void; onStop: () => void; t: (key: TranslationKey)=>string; mediaPanel: ReactNode }
 
-export function ControlPanel({ settings, state, onSettings, onStop, t }: Props) {
+export function ControlPanel({ settings, state, onSettings, onStop, t, mediaPanel }: Props) {
   return <aside>
     <div className="panel-title"><span>{t('controls')}</span><span>01—03</span></div>
+    {mediaPanel}
     <section className="control"><p className="control-label"><span>01</span> {t('effect')}</p>
       <div className="effects" role="group" aria-label={t('effectGroup')}>{EFFECTS.map(value =>
         <button key={value} className={`effect${settings.effect===value?' active':''}`} data-effect={value} aria-pressed={settings.effect===value} onClick={() => onSettings({...settings,effect:value})}><span className={`swatch ${value}`} />{t(value)}</button>

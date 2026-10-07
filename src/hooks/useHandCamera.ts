@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CameraSession } from '../camera/CameraSession';
 import { INITIAL_STATE } from '../types';
-import type { Settings, Effect } from '../types';
+import type { Settings, Effect, WindowMedia } from '../types';
 
 export function useHandCamera(settings: Settings, onEffect: (effect: Effect) => void) {
   const videoRef = useRef<HTMLVideoElement>(null), canvasRef = useRef<HTMLCanvasElement>(null);
@@ -19,5 +19,6 @@ export function useHandCamera(settings: Settings, onEffect: (effect: Effect) => 
   useEffect(() => { settingsRef.current = settings; sessionRef.current?.setSettings(settings); }, [settings]);
   const start = useCallback(() => { void sessionRef.current?.start(); }, []);
   const stop = useCallback(() => sessionRef.current?.stop(), []);
-  return { videoRef, canvasRef, state, start, stop };
+  const setMedia = useCallback((media: WindowMedia | null) => sessionRef.current?.setMedia(media), []);
+  return { videoRef, canvasRef, state, start, stop, setMedia };
 }

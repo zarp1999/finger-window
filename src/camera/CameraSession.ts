@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS, INITIAL_STATE, EFFECTS } from '../types';
-import type { CameraState, Hand, Settings, Effect } from '../types';
+import type { CameraState, Hand, Settings, Effect, WindowMedia } from '../types';
 import { CameraSource, cameraErrorMessage } from './CameraSource';
 import { GestureController } from '../tracking/GestureController';
 import { HandTracker } from '../tracking/HandTracker';
@@ -22,11 +22,13 @@ export class CameraSession {
   private hands: Hand[] = [];
   private gestures = new GestureController();
   private strength = .7;
+  private media: WindowMedia | null = null;
 
   constructor(private video: HTMLVideoElement, canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}) {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(canvas);
   }
   setSettings(settings: Settings): void { this.settings = settings; }
+  setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset(); }
   private publish(patch: Partial<CameraState>): void {
     if (this.disposed) return;
     const next = { ...this.state, ...patch };
@@ -64,13 +66,13 @@ export class CameraSession {
           this.hands = this.tracker.detect(this.video, time);
           const gesture = this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
           this.strength = gesture.strength;
-          if (gesture.next) {
+          if (gesture.next && !this.media) {
             const effect = EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
           this.publish({ strength: Math.round(this.strength*100)/100 });
         }
-        const visible = this.renderer.render(this.video,this.hands,this.settings,this.strength);
+        const visible = this.renderer.render(this.video,this.hands,this.settings,this.strength,this.media);
         const count = this.hands.length;
         this.publish({ hands: count,
           message: count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',

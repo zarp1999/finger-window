@@ -1,4 +1,5 @@
-import type { Hand, Point, Settings } from '../types';
+import type { Hand, Point, Settings, WindowMedia } from '../types';
+import { drawMediaWarp } from './MediaWarp';
 import { convexHull, polygonArea } from '../lib/geometry';
 import { EffectRenderer } from './EffectRenderer';
 
@@ -29,13 +30,16 @@ export class WindowRenderer {
     const c = this.context; c.beginPath();
     points.forEach((p,i) => i ? c.lineTo(p.x,p.y) : c.moveTo(p.x,p.y)); c.closePath();
   }
-  render(video: HTMLVideoElement, hands: Hand[], settings: Settings, strength = 1): boolean {
+  render(video: HTMLVideoElement, hands: Hand[], settings: Settings, strength = 1, media: WindowMedia | null = null): boolean {
     const c = this.context;
     this.clear(); this.draw(video, settings.mirror);
     const polygon = hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
-    const visible = polygon.length >= 3 && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002;
+    const visible = polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002;
     if (visible) {
-      c.save(); this.path(polygon); c.clip(); this.draw(this.effect.render(video,settings.effect,strength),settings.mirror); c.restore();
+      c.save(); this.path(polygon); c.clip();
+      if (media) { this.effect.reset(); drawMediaWarp(c,media,polygon); }
+      else this.draw(this.effect.render(video,settings.effect,strength),settings.mirror);
+      c.restore();
       this.path(polygon); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
       polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle='#fff';c.fill(); });
     } else this.effect.reset();
