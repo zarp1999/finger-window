@@ -10,11 +10,12 @@ export interface CameraState {
   phase: 'idle' | 'loading' | 'live' | 'error';
   hands: number;
   fps: number;
+  strength: number;
   message: TranslationKey;
   hint: TranslationKey;
 }
 export const DEFAULT_SETTINGS: Settings = { effect: 'thermal', mirror: true, showSkeleton: true };
 export const INITIAL_STATE: CameraState = {
-  phase: 'idle', hands: 0, fps: 0,
+  phase: 'idle', hands: 0, fps: 0, strength: .7,
   message: 'ready', hint: 'initialHint',
 };

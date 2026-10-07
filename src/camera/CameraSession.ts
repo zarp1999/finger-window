@@ -1,6 +1,7 @@
-import { DEFAULT_SETTINGS, INITIAL_STATE } from '../types';
-import type { CameraState, Hand, Settings } from '../types';
+import { DEFAULT_SETTINGS, INITIAL_STATE, EFFECTS } from '../types';
+import type { CameraState, Hand, Settings, Effect } from '../types';
 import { CameraSource, cameraErrorMessage } from './CameraSource';
+import { GestureController } from '../tracking/GestureController';
 import { HandTracker } from '../tracking/HandTracker';
 import { WindowRenderer } from '../rendering/WindowRenderer';
 
@@ -19,8 +20,10 @@ export class CameraSession {
   private fpsFrames = 0;
   private fpsTime = 0;
   private hands: Hand[] = [];
+  private gestures = new GestureController();
+  private strength = .7;
 
-  constructor(private video: HTMLVideoElement, canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void) {
+  constructor(private video: HTMLVideoElement, canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}) {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(canvas);
   }
   setSettings(settings: Settings): void { this.settings = settings; }
@@ -49,7 +52,7 @@ export class CameraSession {
   }
   stop(): void {
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.renderer.reset(); this.publish({ ...INITIAL_STATE, message: 'cameraStopped' });
+    this.gestures.reset(); this.strength = .7; this.renderer.reset(); this.publish({ ...INITIAL_STATE, message: 'cameraStopped' });
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {
@@ -59,8 +62,15 @@ export class CameraSession {
         if (this.video.currentTime !== this.lastVideo && time-this.lastDetection >= 33) {
           this.lastVideo = this.video.currentTime; this.lastDetection = time;
           this.hands = this.tracker.detect(this.video, time);
+          const gesture = this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
+          this.strength = gesture.strength;
+          if (gesture.next) {
+            const effect = EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
+            this.settings = { ...this.settings, effect }; this.onEffect(effect);
+          }
+          this.publish({ strength: Math.round(this.strength*100)/100 });
         }
-        const visible = this.renderer.render(this.video,this.hands,this.settings);
+        const visible = this.renderer.render(this.video,this.hands,this.settings,this.strength);
         const count = this.hands.length;
         this.publish({ hands: count,
           message: count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',

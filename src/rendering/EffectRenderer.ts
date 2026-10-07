@@ -15,6 +15,7 @@ export class EffectRenderer {
   private shaders: WebGLShader[] = [];
   private mode: WebGLUniformLocation | null = null;
   private resolution: WebGLUniformLocation | null = null;
+  private strengthUniform: WebGLUniformLocation | null = null;
   private time: WebGLUniformLocation | null = null;
   private trail = document.createElement('canvas');
   private trailContext = this.trail.getContext('2d')!;
@@ -52,6 +53,7 @@ export class EffectRenderer {
       this.mode = gl.getUniformLocation(program, 'mode');
       this.resolution = gl.getUniformLocation(program, 'resolution');
       this.time = gl.getUniformLocation(program, 'time');
+      this.strengthUniform = gl.getUniformLocation(program, 'strength');
     } catch { this.dispose(); this.gl = null; }
   }
   resize(width: number, height: number): void {
@@ -64,12 +66,13 @@ export class EffectRenderer {
     if (this.historyReady) this.trailContext.clearRect(0,0,this.trail.width,this.trail.height);
     this.historyReady = false; this.lastTime = 0; this.lastEffect = null;
   }
-  render(video: HTMLVideoElement, effect: Effect): HTMLCanvasElement {
+  render(video: HTMLVideoElement, effect: Effect, strength = 1): HTMLCanvasElement {
     if (this.lastEffect !== effect) { this.reset(); this.lastEffect = effect; }
+    strength = Math.max(0,Math.min(1,strength));
     const now = performance.now();
     if (effect === 'trail') {
       const delta = Math.min(100,Math.max(1,now-this.lastTime));
-      this.trailContext.globalAlpha = this.historyReady ? 1-Math.exp(-delta/240) : 1;
+      this.trailContext.globalAlpha = this.historyReady ? 1-Math.exp(-delta/(40+strength*400)) : 1;
       this.trailContext.drawImage(video,0,0,this.trail.width,this.trail.height);
       this.trailContext.globalAlpha = 1; this.historyReady = true; this.lastTime = now;
       return this.trail;
@@ -82,6 +85,7 @@ export class EffectRenderer {
       gl.uniform1i(this.mode, EFFECTS.indexOf(effect));
       gl.uniform2f(this.resolution,this.canvas.width,this.canvas.height);
       gl.uniform1f(this.time,now/1000);
+      gl.uniform1f(this.strengthUniform,strength);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return this.canvas;
     }
@@ -97,28 +101,31 @@ export class EffectRenderer {
       else if (effect === 'mono') rgb = [l,l,l];
       else if (effect === 'negative') rgb = [255-source[i],255-source[i+1],255-source[i+2]];
       else if (effect === 'mosaic') {
-        const block = Math.max(2,Math.round(24*w/this.canvas.width));
+        const block = Math.max(2,Math.round((3+strength*21)*w/this.canvas.width));
         rgb = [0,1,2].map(c => sample(Math.floor(x/block)*block+block/2,Math.floor(y/block)*block+block/2,c));
       } else if (effect === 'neon') {
         const dx = light(x+1,y)-light(x-1,y),dy = light(x,y+1)-light(x,y-1);
         const edge = Math.min(1,Math.hypot(dx,dy)*4), t = x/w;
         rgb = [3+edge*(20+235*t),4+edge*(255-230*t),10+edge*216];
-      } else if (effect === 'rgb') rgb = [sample(x+w*.015,y+h*.004,0),source[i+1],sample(x-w*.015,y-h*.004,2)];
+      } else if (effect === 'rgb') rgb = [sample(x+w*.015*strength,y+h*.004*strength,0),source[i+1],sample(x-w*.015*strength,y-h*.004*strength,2)];
       else {
         const u = (x+.5)/w, v = (y+.5)/h,px = u-.5,py = v-.5,aspect = w/h;
         let qx: number,qy: number;
         if (effect === 'kaleidoscope') {
-          const sector = Math.PI/3,a = Math.abs(((Math.atan2(py,px*aspect)%sector+sector)%sector)-sector/2),r = Math.hypot(px*aspect,py);
-          qx = ((Math.cos(a)*r/aspect+.5)*1.8)%1; qy = ((Math.sin(a)*r+.5)*1.8)%1;
+          const sector = Math.PI/(2+Math.floor(strength*6)),a = Math.abs(((Math.atan2(py,px*aspect)%sector+sector)%sector)-sector/2),r = Math.hypot(px*aspect,py);
+          qx = ((Math.cos(a)*r/aspect+.5)*(1+strength*.8))%1; qy = ((Math.sin(a)*r+.5)*(1+strength*.8))%1;
         } else {
           const time = now/1000, radius = Math.hypot(px*aspect,py),length = Math.hypot(px+.0001,py+.0001);
-          const wave = Math.sin(radius*48-time*3.5)*.017;
-          qx = u+(px+.0001)/length*wave+Math.sin(v*24+time*1.7)*.007;
-          qy = v+(py+.0001)/length*wave+Math.cos(u*18-time*1.3)*.007;
+          const wave = Math.sin(radius*48-time*3.5)*.017*strength;
+          qx = u+(px+.0001)/length*wave+Math.sin(v*24+time*1.7)*.007*strength;
+          qy = v+(py+.0001)/length*wave+Math.cos(u*18-time*1.3)*.007*strength;
         }
         rgb = [0,1,2].map(c => sample(qx*w,qy*h,c));
       }
-      image.data[i] = rgb[0]; image.data[i+1] = rgb[1]; image.data[i+2] = rgb[2];
+      const blend = ['thermal','mono','negative','neon','kaleidoscope'].includes(effect) ? strength : 1;
+      image.data[i] = source[i]+(rgb[0]-source[i])*blend;
+      image.data[i+1] = source[i+1]+(rgb[1]-source[i+1])*blend;
+      image.data[i+2] = source[i+2]+(rgb[2]-source[i+2])*blend;
     }
     this.context.putImageData(image, 0, 0); return this.fallback;
   }

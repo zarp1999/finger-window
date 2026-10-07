@@ -29,13 +29,13 @@ export class WindowRenderer {
     const c = this.context; c.beginPath();
     points.forEach((p,i) => i ? c.lineTo(p.x,p.y) : c.moveTo(p.x,p.y)); c.closePath();
   }
-  render(video: HTMLVideoElement, hands: Hand[], settings: Settings): boolean {
+  render(video: HTMLVideoElement, hands: Hand[], settings: Settings, strength = 1): boolean {
     const c = this.context;
     this.clear(); this.draw(video, settings.mirror);
     const polygon = hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
     const visible = polygon.length >= 3 && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002;
     if (visible) {
-      c.save(); this.path(polygon); c.clip(); this.draw(this.effect.render(video,settings.effect),settings.mirror); c.restore();
+      c.save(); this.path(polygon); c.clip(); this.draw(this.effect.render(video,settings.effect,strength),settings.mirror); c.restore();
       this.path(polygon); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
       polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle='#fff';c.fill(); });
     } else this.effect.reset();

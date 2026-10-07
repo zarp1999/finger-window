@@ -8,7 +8,7 @@ import { useLanguage } from './hooks/useLanguage';
 
 export function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const camera = useHandCamera(settings);
+  const camera = useHandCamera(settings, effect => setSettings(previous => ({...previous,effect})));
   const { language, setLanguage, t } = useLanguage();
   useWebMcp({state:camera.state,settings,onEffect:effect=>setSettings(previous=>({...previous,effect})),onStop:camera.stop});
   return <div className={`app${camera.state.phase==='live'?' live':''}`}>
