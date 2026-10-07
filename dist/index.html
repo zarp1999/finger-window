@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101216"><meta name="description" content="両手の指先で窓をつくり、カメラ映像の一部をサーモグラフィー風に変える。">
+  <title>Finger Window — 指先でつくる映像の窓</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101216'/%3E%3Cpath d='M7 8L25 11L22 25L8 22Z' fill='none' stroke='%23c4ff61' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><a class="brand" href="./" aria-label="Finger Window ホーム"><span class="mark">⌑</span> FINGER WINDOW</a><span class="edition">INTERACTIVE CAMERA / 01</span></header>
+  <main>
+    <div class="heading"><div><p class="eyebrow">指先でつくる、映像の窓。</p><h1>手の間に、もうひとつの色。</h1></div><span class="tag">HAND TRACKING</span></div>
+    <section class="workspace" aria-label="カメラエフェクト">
+      <div class="stage" id="stage">
+        <video id="video" autoplay muted playsinline aria-hidden="true"></video>
+        <canvas id="output" width="960" height="540" aria-label="手の追跡とエフェクトを重ねたカメラ映像"></canvas>
+        <div class="stage-top"><span id="modeLabel">CAMERA STANDBY</span><span id="fps">— FPS</span></div>
+        <div id="welcome" class="welcome"><span class="window-icon" aria-hidden="true"></span><h2>両手で、窓をひらこう。</h2><p>親指と人差し指を開いて、両手をカメラへ。<br>4つの指先に囲まれた映像の色が変わります。</p><button id="start" class="primary">カメラを開始</button><p class="privacy">映像はこのブラウザ内で処理されます。</p></div>
+        <div class="stage-bottom"><span id="hint">カメラを開始して、両手を映してください</span><span class="corner">LIVE WINDOW</span></div>
+      </div>
+      <aside>
+        <div class="panel-title"><span>CONTROLS</span><span>01—03</span></div>
+        <section class="control"><p class="control-label"><span>01</span> エフェクト</p><div class="effects" role="group" aria-label="映像エフェクト"><button class="effect active" data-effect="thermal" aria-pressed="true"><span class="swatch thermal"></span>サーモ</button><button class="effect" data-effect="mono" aria-pressed="false"><span class="swatch mono"></span>モノクロ</button><button class="effect" data-effect="negative" aria-pressed="false"><span class="swatch negative"></span>反転</button></div><p class="note">サーモは色の表現です。温度測定ではありません。</p></section>
+        <section class="control"><p class="control-label"><span>02</span> 表示</p><label class="toggle">手の点と線を表示<input id="skeleton" type="checkbox" checked><span class="switch"></span></label><label class="toggle">鏡のように左右反転<input id="mirror" type="checkbox" checked><span class="switch"></span></label></section>
+        <section class="control"><p class="control-label"><span>03</span> 動作状況</p><div class="status-row"><span>カメラ</span><strong id="cameraStatus">停止中</strong></div><div class="status-row"><span>手の検出</span><strong id="handsStatus">0 / 2</strong></div><p id="status" class="status" role="status" aria-live="polite">準備できています</p><button id="stop" class="secondary" disabled>カメラを停止</button></section>
+        <div class="tips"><span class="tips-label">TRACKING TIP</span><p>明るい場所で、手全体を映します。両手を離し、指先が重ならないようにしてください。</p></div>
+      </aside>
+    </section>
+    <div class="guide"><span class="guide-number">HOW TO</span><p><b>1</b> カメラを許可 <span>/</span> <b>2</b> 両手の親指と人差し指を開く <span>/</span> <b>3</b> 手を動かして窓を変形</p></div>
+  </main>
+  <footer><span>FINGER WINDOW / REAL-TIME VISUAL EXPERIMENT</span><span>カメラ映像の保存・送信なし</span></footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
