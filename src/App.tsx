@@ -14,7 +14,6 @@ export function App() {
   return <div className={`app${camera.state.phase==='live'?' live':''}`}>
     <header><a className="brand" href="./" aria-label={t('home')}><span className="mark">⌑</span> FINGER WINDOW</a><div className="header-controls"><span className="edition">{t('edition')}</span><div className="language-switch" role="group" aria-label={t('language')}><button lang="ja" aria-pressed={language==='ja'} onClick={()=>setLanguage('ja')}>日本語</button><button lang="mn" aria-pressed={language==='mn'} onClick={()=>setLanguage('mn')}>Монгол</button></div></div></header>
     <main>
-      <div className="heading"><div><p className="eyebrow">{t('eyebrow')}</p><h1>{t('heading')}</h1></div><span className="tag">{t('tag')}</span></div>
       <section className="workspace" aria-label={t('workspace')}>
         <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} t={t} />
         <ControlPanel settings={settings} state={camera.state} onSettings={setSettings} onStop={camera.stop} t={t} />

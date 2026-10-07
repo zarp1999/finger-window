@@ -38,7 +38,7 @@ export class WindowRenderer {
       c.save(); this.path(polygon); c.clip(); this.draw(this.effect.render(video,settings.effect),settings.mirror); c.restore();
       this.path(polygon); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
       polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle='#fff';c.fill(); });
-    }
+    } else this.effect.reset();
     if (settings.showSkeleton) hands.forEach(hand => {
       c.strokeStyle = '#80ff91'; c.lineWidth = 1.7;
       CONNECTIONS.forEach(([a,b]) => { const p=this.point(hand[a],settings.mirror),q=this.point(hand[b],settings.mirror); c.beginPath();c.moveTo(p.x,p.y);c.lineTo(q.x,q.y);c.stroke(); });
@@ -47,5 +47,6 @@ export class WindowRenderer {
     return visible;
   }
   clear(): void { this.context.clearRect(0,0,this.canvas.width,this.canvas.height); }
+  reset(): void { this.clear(); this.effect.reset(); }
   dispose(): void { this.clear(); this.effect.dispose(); }
 }

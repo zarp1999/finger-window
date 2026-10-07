@@ -1,5 +1,7 @@
 import type { TranslationKey } from './i18n';
-export type Effect = 'thermal' | 'mono' | 'negative';
+export const EFFECTS = ['thermal','mono','negative','mosaic','neon','rgb','kaleidoscope','ripple','trail'] as const;
+export type Effect = typeof EFFECTS[number];
+export function isEffect(value: unknown): value is Effect { return EFFECTS.some(effect => effect === value); }
 export interface Point { x: number; y: number }
 export interface Landmark extends Point { z: number }
 export type Hand = Landmark[];

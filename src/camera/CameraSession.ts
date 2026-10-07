@@ -49,7 +49,7 @@ export class CameraSession {
   }
   stop(): void {
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.renderer.clear(); this.publish({ ...INITIAL_STATE, message: 'cameraStopped' });
+    this.renderer.reset(); this.publish({ ...INITIAL_STATE, message: 'cameraStopped' });
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {

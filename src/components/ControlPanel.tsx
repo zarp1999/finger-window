@@ -1,16 +1,16 @@
-import type { CameraState, Effect, Settings } from '../types';
+import { EFFECTS } from '../types';
+import type { CameraState, Settings } from '../types';
 import type { TranslationKey } from '../i18n';
 
 interface Props { settings: Settings; state: CameraState; onSettings: (settings: Settings) => void; onStop: () => void; t: (key: TranslationKey)=>string }
-const effects: Effect[] = ['thermal','mono','negative'];
 
 export function ControlPanel({ settings, state, onSettings, onStop, t }: Props) {
   return <aside>
     <div className="panel-title"><span>{t('controls')}</span><span>01—03</span></div>
     <section className="control"><p className="control-label"><span>01</span> {t('effect')}</p>
-      <div className="effects" role="group" aria-label={t('effectGroup')}>{effects.map(value =>
+      <div className="effects" role="group" aria-label={t('effectGroup')}>{EFFECTS.map(value =>
         <button key={value} className={`effect${settings.effect===value?' active':''}`} data-effect={value} aria-pressed={settings.effect===value} onClick={() => onSettings({...settings,effect:value})}><span className={`swatch ${value}`} />{t(value)}</button>
-      )}</div><p className="note">{t('thermalNote')}</p>
+      )}</div>{settings.effect==='thermal'&&<p className="note">{t('thermalNote')}</p>}
     </section>
     <section className="control"><p className="control-label"><span>02</span> {t('display')}</p>
       <label className="toggle">{t('skeleton')}<input id="skeleton" type="checkbox" checked={settings.showSkeleton} onChange={e => onSettings({...settings,showSkeleton:e.target.checked})} /><span className="switch" /></label>

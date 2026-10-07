@@ -1,5 +1,6 @@
 node_modules/
 dist/
 .sites-runtime/
-.openai/
+.openai/*
+!.openai/hosting.json
 *.local
