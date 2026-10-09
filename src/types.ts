@@ -9,7 +9,8 @@ export interface WindowMedia {
   kind: 'image' | 'video'; element: HTMLImageElement | HTMLVideoElement;
   url: string; name: string; width: number; height: number;
 }
-export interface Settings { effect: Effect; mirror: boolean; showSkeleton: boolean; flowers: boolean; autoPhoto: boolean }
+export type EffectScope = 'window' | 'full';
+export interface Settings { effect: Effect; mirror: boolean; showSkeleton: boolean; flowers: boolean; autoPhoto: boolean; effectScope: EffectScope }
 export interface CameraState {
   phase: 'idle' | 'loading' | 'live' | 'error';
   hands: number;
@@ -21,7 +22,7 @@ export interface CameraState {
   message: TranslationKey;
   hint: TranslationKey;
 }
-export const DEFAULT_SETTINGS: Settings = { effect: 'thermal', mirror: true, showSkeleton: true, flowers: false, autoPhoto: true };
+export const DEFAULT_SETTINGS: Settings = { effect: 'thermal', mirror: true, showSkeleton: true, flowers: false, autoPhoto: true, effectScope:'window' };
 export const INITIAL_STATE: CameraState = {
   phase: 'idle', hands: 0, fps: 0, strength: .7, flowerCount: 0, photoCountdown: null, photoLocked: false,
   message: 'ready', hint: 'initialHint',

@@ -16,6 +16,7 @@ export function ControlPanel({ settings, state, onSettings, onStop, onClearFlowe
       <button id="clearFlowers" className="secondary" onClick={onClearFlowers} disabled={!state.flowerCount}>{t('clearFlowers')}</button></>}
     </section>
     <section className="control"><p className="control-label"><span>01</span> {t('effect')}</p>
+      <p className="note">{t('modeGestureHelp')}</p>
       <div className="effects" role="group" aria-label={t('effectGroup')}>{EFFECTS.map(value =>
         <button key={value} className={`effect${settings.effect===value&&!settings.flowers?' active':''}`} data-effect={value} aria-pressed={settings.effect===value&&!settings.flowers} onClick={() => onSettings({...settings,effect:value,flowers:false})}><span className={`swatch ${value}`} />{t(value)}</button>
       )}</div>{!settings.flowers&&<><p className="note">{t('gestureHelp')}</p><div className="status-row"><span>{t('strength')}</span><strong id="strength">{Math.round(state.strength*100)}%</strong></div></>}

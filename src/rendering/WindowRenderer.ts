@@ -10,6 +10,7 @@ export class WindowRenderer {
   private context: CanvasRenderingContext2D;
   private effect = new EffectRenderer();
   private flowers = new FlowerTrail();
+  private fullScreen=false;
   get flowerCount():number {return this.flowers.count;}
   updateFlowers(hands:Hand[],time:number,settings:Settings):void {this.flowers.setEnabled(settings.flowers);this.flowers.update(hands,time,settings.mirror);}
   clearFlowers():void {this.flowers.clear();}
@@ -39,9 +40,12 @@ export class WindowRenderer {
   render(video: HTMLVideoElement, hands: Hand[], settings: Settings, strength = 1, media: WindowMedia | null = null): boolean {
     const c = this.context;
     this.clear(); this.draw(video, settings.mirror);
+    const fullScreen=settings.effectScope==='full'&&!settings.flowers&&!media;
+    if(fullScreen!==this.fullScreen){this.effect.reset();this.fullScreen=fullScreen;}
     const polygon = hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
-    const visible = !settings.flowers && polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002;
-    if (visible) {
+    const visible = !settings.flowers && (fullScreen || (polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002));
+    if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength),settings.mirror);}
+    else if (visible) {
       c.save(); this.path(polygon); c.clip();
       if (media) { this.effect.reset(); drawMediaWarp(c,media,polygon); }
       else this.draw(this.effect.render(video,settings.effect,strength),settings.mirror);
