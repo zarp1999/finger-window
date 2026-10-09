@@ -72,3 +72,4 @@ html,body,#root{width:100%;height:100%;overflow:hidden}
  .compact-app .welcome .primary{padding:10px 20px;min-height:44px}.compact-app .welcome{padding:12px}
 }
 @media(prefers-reduced-motion:no-preference){.bottom-sheet[open]{animation:sheet-in .18s ease-out}@keyframes sheet-in{from{transform:translateY(24px);opacity:.5}to{transform:translateY(0);opacity:1}}}
+.swatch.blob{border:1px solid #a9ffce;background:radial-gradient(circle,#a9ffce 0 2px,transparent 3px) #0d241c;box-shadow:inset 0 0 0 3px #0d241c}

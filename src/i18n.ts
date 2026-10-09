@@ -1,5 +1,6 @@
 export type Language = 'ja' | 'mn';
 const ja = {
+ blob:'Blob Tracking',
  settingsShort:'設定',close:'閉じる',oneShotShort:'1枚',threeShotShort:'3枚',captureShort:'撮影',recordShort:'録画',flowersShort:'花',helpShort:'使い方',savedMedia:'写真・動画を保存',noSavedMedia:'撮影した写真や録画した動画がここに表示されます。',
  photoMode:'撮影モード',photoSingle:'1枚撮影',photoBooth:'3枚・Photo Booth',photoBoothHelp:'毎回3・2・1を表示して、合計3枚撮影します。カウントダウン中も自由にポーズを変えられます。白い余白付きの縦長写真として保存します。',photoBoothProgress:'撮影済み',photoPose:'次のポーズへ',
  sprite:'16-bit Sprite',mixed:'Mixed Media',raster:'Raster Lines',stipple:'Stipple Duotone',xerox:'Xerox Collage',
@@ -16,6 +17,7 @@ const ja = {
 };
 export type TranslationKey = keyof typeof ja;
 const mn: Record<TranslationKey,string> = {
+ blob:'Blob Tracking',
  settingsShort:'Тохир.',close:'Хаах',oneShotShort:'1 зураг',threeShotShort:'3 зураг',captureShort:'Зураг',recordShort:'Бичлэг',flowersShort:'Цэцэг',helpShort:'Заавар',savedMedia:'Зураг, видео хадгалах',noSavedMedia:'Авсан зураг болон бичсэн видео энд харагдана.',
  photoMode:'Зураг авах горим',photoSingle:'1 зураг',photoBooth:'3 зураг · Photo Booth',photoBoothHelp:'Зураг бүрийн өмнө 3, 2, 1 гэж тоолж нийт 3 зураг авна. Тоолох үед байрлалаа чөлөөтэй өөрчилж болно. Цагаан хүрээтэй босоо нэг зураг болгон хадгална.',photoBoothProgress:'Авсан зураг',photoPose:'Дараагийн байрлалаа аваарай',
  sprite:'16-bit Sprite',mixed:'Mixed Media',raster:'Raster Lines',stipple:'Stipple Duotone',xerox:'Xerox Collage',

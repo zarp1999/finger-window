@@ -43,11 +43,11 @@ export class WindowRenderer {
     if(fullScreen!==this.fullScreen){this.effect.reset();this.fullScreen=fullScreen;}
     const polygon = hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
     const visible = !settings.flowers && (fullScreen || (polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002));
-    if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength),settings.mirror);}
+    if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);}
     else if (visible) {
       c.save(); this.path(polygon); c.clip();
       if (media) { this.effect.reset(); drawMediaWarp(c,media,polygon); }
-      else this.draw(this.effect.render(video,settings.effect,strength),settings.mirror);
+      else this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);
       c.restore();
       this.path(polygon); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
       polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle='#fff';c.fill(); });
