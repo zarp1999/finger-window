@@ -1,5 +1,5 @@
 import type { Effect } from '../types';
-import { EFFECTS } from '../types';
+const EFFECT_MODES:Record<Effect,number> = {thermal:0,mono:1,negative:2,mosaic:3,rgb:5,ripple:7,trail:8,sprite:9,mixed:12,raster:14,stipple:15,xerox:16};
 import { thermalColor } from '../lib/geometry';
 import { vertexShader, fragmentShader } from './shaders';
 import { STYLE_EFFECTS, stylePixel } from './StyleEffects';
@@ -68,20 +68,6 @@ export class EffectRenderer {
     this.historyReady = false; this.lastTime = 0; this.lastEffect = null;
   }
   render(video: HTMLVideoElement, effect: Effect, strength = 1): HTMLCanvasElement {
-    if(effect!=='phosphor')return this.renderFrame(video,effect,strength);
-    const previous=this.lastTime,ready=this.historyReady&&this.lastEffect==='phosphor';
-    const frame=this.renderFrame(video,effect,strength),now=performance.now();
-    const ctx=this.trailContext;
-    if(ready&&previous){
-      ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1-Math.exp(-Math.min(100,now-previous)/320);
-      ctx.fillStyle='#000';ctx.fillRect(0,0,this.trail.width,this.trail.height);
-    }else ctx.clearRect(0,0,this.trail.width,this.trail.height);
-    ctx.globalAlpha=1;ctx.globalCompositeOperation='lighten';
-    ctx.drawImage(frame,0,0,this.trail.width,this.trail.height);
-    ctx.globalCompositeOperation='source-over';this.historyReady=true;this.lastTime=now;
-    return this.trail;
-  }
-  private renderFrame(video: HTMLVideoElement, effect: Effect, strength = 1): HTMLCanvasElement {
     if (this.lastEffect !== effect) { this.reset(); this.lastEffect = effect; }
     strength = Math.max(0,Math.min(1,strength));
     const now = performance.now();
@@ -97,7 +83,7 @@ export class EffectRenderer {
       gl.viewport(0, 0, this.canvas.width, this.canvas.height);
       gl.useProgram(this.program); gl.bindTexture(gl.TEXTURE_2D, this.texture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
-      gl.uniform1i(this.mode, EFFECTS.indexOf(effect));
+      gl.uniform1i(this.mode, EFFECT_MODES[effect]);
       gl.uniform2f(this.resolution,this.canvas.width,this.canvas.height);
       gl.uniform1f(this.time,now/1000);
       gl.uniform1f(this.strengthUniform,strength);
@@ -112,25 +98,18 @@ export class EffectRenderer {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = (y*w+x)*4, l = light(x,y)*255;
       let rgb: number[];
-      if (STYLE_EFFECTS.includes(effect)) rgb = stylePixel(effect,x,y,w,h,this.canvas.width,sample,now/1000);
+      if (STYLE_EFFECTS.includes(effect)) rgb = stylePixel(effect,x,y,w,h,this.canvas.width,sample);
       else if (effect === 'thermal') rgb = thermalColor(l/255);
       else if (effect === 'mono') rgb = [l,l,l];
       else if (effect === 'negative') rgb = [255-source[i],255-source[i+1],255-source[i+2]];
       else if (effect === 'mosaic') {
         const block = Math.max(2,Math.round((3+strength*21)*w/this.canvas.width));
         rgb = [0,1,2].map(c => sample(Math.floor(x/block)*block+block/2,Math.floor(y/block)*block+block/2,c));
-      } else if (effect === 'neon') {
-        const dx = light(x+1,y)-light(x-1,y),dy = light(x,y+1)-light(x,y-1);
-        const edge = Math.min(1,Math.hypot(dx,dy)*4), t = x/w;
-        rgb = [3+edge*(20+235*t),4+edge*(255-230*t),10+edge*216];
       } else if (effect === 'rgb') rgb = [sample(x+w*.015*strength,y+h*.004*strength,0),source[i+1],sample(x-w*.015*strength,y-h*.004*strength,2)];
       else {
         const u = (x+.5)/w, v = (y+.5)/h,px = u-.5,py = v-.5,aspect = w/h;
         let qx: number,qy: number;
-        if (effect === 'kaleidoscope') {
-          const sector = Math.PI/(2+Math.floor(strength*6)),a = Math.abs(((Math.atan2(py,px*aspect)%sector+sector)%sector)-sector/2),r = Math.hypot(px*aspect,py);
-          qx = ((Math.cos(a)*r/aspect+.5)*(1+strength*.8))%1; qy = ((Math.sin(a)*r+.5)*(1+strength*.8))%1;
-        } else {
+        {
           const time = now/1000, radius = Math.hypot(px*aspect,py),length = Math.hypot(px+.0001,py+.0001);
           const wave = Math.sin(radius*48-time*3.5)*.017*strength;
           qx = u+(px+.0001)/length*wave+Math.sin(v*24+time*1.7)*.007*strength;
@@ -138,7 +117,7 @@ export class EffectRenderer {
         }
         rgb = [0,1,2].map(c => sample(qx*w,qy*h,c));
       }
-      const blend = ['thermal','mono','negative','neon','kaleidoscope'].includes(effect) ? strength : 1;
+      const blend = ['thermal','mono','negative'].includes(effect) ? strength : 1;
       image.data[i] = source[i]+(rgb[0]-source[i])*blend;
       image.data[i+1] = source[i+1]+(rgb[1]-source[i+1])*blend;
       image.data[i+2] = source[i+2]+(rgb[2]-source[i+2])*blend;

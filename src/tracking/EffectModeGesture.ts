@@ -21,6 +21,11 @@ export class EffectModeGesture {
   update(hands:Hand[],time:number,aspect:number):{active:boolean;toggle:boolean} {
     if(this.lastTime&&time-this.lastTime>250)this.heldSince=null;
     this.lastTime=time;
+    // Two V signs belong to photography. Require release before mode toggling.
+    if(hands.filter(hand=>victorySign(hand,aspect)).length===2){
+      this.heldSince=null;this.releasedSince=null;this.key=null;this.locked=true;
+      return {active:false,toggle:false};
+    }
     const index=hands.findIndex(hand=>victorySign(hand,aspect));
     if(index<0){
       this.heldSince=null;this.key=null;this.releasedSince??=time;

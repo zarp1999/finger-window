@@ -2,7 +2,7 @@ import { DEFAULT_SETTINGS, INITIAL_STATE, EFFECTS } from '../types';
 import type { CameraState, Hand, Settings, Effect, WindowMedia, EffectScope } from '../types';
 import { CameraSource, cameraErrorMessage } from './CameraSource';
 import { GestureController } from '../tracking/GestureController';
-import { PhotoGesture } from '../tracking/PhotoGesture';
+import { PhotoGesture, photoPose } from '../tracking/PhotoGesture';
 import { PhotoStrip } from './PhotoStrip';
 import { EffectModeGesture } from '../tracking/EffectModeGesture';
 import { HandTracker } from '../tracking/HandTracker';
@@ -95,13 +95,12 @@ export class CameraSession {
             }
           }else{this.modeGesture.reset();this.modeHolding=false;}
           const gesture = this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
-          if (gesture.next && !this.media && !this.settings.flowers && !this.modeHolding) {
+          if (gesture.next && !this.media && !this.settings.flowers && !this.modeHolding && !photoPose(this.hands,this.video.videoWidth/this.video.videoHeight) && this.state.photoCountdown===null) {
             const effect = EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
           if(this.photoStrip.active){ /* Once shooting starts, poses can change freely. */ }
-          else if(this.modeHolding){this.cancelPhoto();}
           else if(this.settings.autoPhoto&&!document.hidden){
             const photo=this.photoGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
             takePhoto=photo.capture;this.publish({photoCountdown:photo.countdown,photoLocked:photo.locked});

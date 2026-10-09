@@ -4,7 +4,6 @@ import { convexHull, polygonArea } from '../lib/geometry';
 import { EffectRenderer } from './EffectRenderer';
 import { FlowerTrail } from './FlowerTrail';
 
-const CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
 
 export class WindowRenderer {
   private context: CanvasRenderingContext2D;
@@ -54,11 +53,7 @@ export class WindowRenderer {
       polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle='#fff';c.fill(); });
     } else this.effect.reset();
     this.flowers.setEnabled(settings.flowers);this.flowers.draw(c,hands,settings.mirror);
-    if (settings.showSkeleton) hands.forEach(hand => {
-      c.strokeStyle = '#80ff91'; c.lineWidth = 1.7;
-      CONNECTIONS.forEach(([a,b]) => { const p=this.point(hand[a],settings.mirror),q=this.point(hand[b],settings.mirror); c.beginPath();c.moveTo(p.x,p.y);c.lineTo(q.x,q.y);c.stroke(); });
-      hand.forEach((p,i) => { const point=this.point(p,settings.mirror); c.beginPath();c.arc(point.x,point.y,[4,8].includes(i)?4:2.7,0,Math.PI*2);c.fillStyle='#ff585f';c.fill(); });
-    });
+
     return visible;
   }
   clear(): void { this.context.clearRect(0,0,this.canvas.width,this.canvas.height); }
