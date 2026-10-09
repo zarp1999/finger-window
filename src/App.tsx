@@ -27,7 +27,7 @@ export function App() {
   const {language,setLanguage,t}=useLanguage();
   useWebMcp({state:camera.state,settings,onEffect:effect=>{content.clear();setSettings(previous=>({...previous,effect,flowers:false}));},onStop:camera.stop});
   const sheetTitle=t(sheet==='effects'?'effect':sheet==='help'?'howTo':sheet==='saved'?'savedMedia':'controls');
-  const currentEffect=settings.flowers?t('flowerMode'):content.media?content.media.name:t(settings.effect);
+  const currentEffect=settings.flowers?t('flowerMode')+(camera.state.flowerPaused?' · '+t('flowersPaused'):''):content.media?content.media.name:t(settings.effect);
   return <div className={`app compact-app${camera.state.phase==='live'?' live':''}`}>
     <header><a className="brand" href="./" aria-label={t('home')}><span className="mark">⌑</span> FINGER WINDOW</a><div className="language-switch" role="group" aria-label={t('language')}><button lang="ja" aria-pressed={language==='ja'} onClick={()=>setLanguage('ja')}>日本語</button><button lang="mn" aria-pressed={language==='mn'} onClick={()=>setLanguage('mn')}>Монгол</button></div></header>
     <main>

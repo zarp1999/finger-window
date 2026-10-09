@@ -27,6 +27,10 @@ export class FlowerTrail {
   private fistSince:number|null=null;
   private latched=false;
   private enabled=false;
+  private leftSince:number|null=null;
+  private leftReleased:number|null=null;
+  private leftLatched=false;
+  paused=false;
   count=0;
   resize(width:number,height:number):void {
     if(this.layer.width===width&&this.layer.height===height)return;
@@ -35,13 +39,22 @@ export class FlowerTrail {
     this.layer.width=width;this.layer.height=height;this.context.drawImage(previous,0,0,width,height);
     this.resetGesture();
   }
-  resetGesture():void {this.last.clear();this.fistSince=null;this.latched=false;}
+  resetGesture():void {this.last.clear();this.fistSince=null;this.latched=false;this.leftSince=null;this.leftReleased=null;this.leftLatched=false;}
   clear():void {this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.last.clear();}
-  setEnabled(enabled:boolean):void {if(enabled!==this.enabled)this.resetGesture();this.enabled=enabled;}
+  setEnabled(enabled:boolean):void {if(enabled!==this.enabled){this.resetGesture();this.paused=false;}this.enabled=enabled;}
   private point(hand:Hand,mirror:boolean):Point {return{x:(mirror?1-hand[8].x:hand[8].x)*this.layer.width,y:hand[8].y*this.layer.height};}
   update(hands:Hand[],time:number,mirror:boolean):void {
     if(!this.enabled)return;
     const aspect=this.layer.width/this.layer.height;
+    const left=hands.find(hand=>hand.side==='Left'&&(hand.confidence??0)>=.75);
+    const leftClosed=!!left&&closedFist(left,aspect);
+    if(leftClosed){
+      this.leftReleased=null;this.leftSince??=time;
+      if(time-this.leftSince>=400&&!this.leftLatched){this.paused=!this.paused;this.leftLatched=true;this.last.clear();}
+    }else{
+      this.leftSince=null;this.leftReleased??=time;
+      if(time-this.leftReleased>=350)this.leftLatched=false;
+    }
     const right=hands.find(hand=>hand.side==='Right'&&(hand.confidence??0)>=.75);
     if(right&&closedFist(right,aspect)){
       this.fistSince??=time;
@@ -50,6 +63,7 @@ export class FlowerTrail {
       this.last.clear();return;
     }
     this.fistSince=null;this.latched=false;
+    if(this.paused||leftClosed){this.last.clear();return;}
     const present=new Set<string>();
     hands.forEach((hand,index)=>{
       const key=hand.side??String(index);present.add(key);
@@ -71,7 +85,7 @@ export class FlowerTrail {
   draw(context:CanvasRenderingContext2D,hands:Hand[],mirror:boolean):void {
     if(!this.enabled)return;
     context.drawImage(this.layer,0,0);
-    if(this.fistSince!==null)return;
+    if(this.paused||this.leftSince!==null||this.fistSince!==null)return;
     hands.filter(hand=>indexExtended(hand,this.layer.width/this.layer.height)).forEach(hand=>this.stamp(this.point(hand,mirror),this.count%FLOWERS.length,false,context));
   }
   dispose():void {this.clear();this.layer.width=0;this.layer.height=0;this.sprites.forEach(sprite=>{sprite.width=0;sprite.height=0;});}

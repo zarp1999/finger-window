@@ -11,6 +11,7 @@ export class WindowRenderer {
   private flowers = new FlowerTrail();
   private fullScreen=false;
   get flowerCount():number {return this.flowers.count;}
+  get flowerPaused():boolean {return this.flowers.paused;}
   updateFlowers(hands:Hand[],time:number,settings:Settings):void {this.flowers.setEnabled(settings.flowers);this.flowers.update(hands,time,settings.mirror);}
   clearFlowers():void {this.flowers.clear();}
   constructor(private canvas: HTMLCanvasElement) {

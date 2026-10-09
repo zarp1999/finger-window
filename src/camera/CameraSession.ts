@@ -105,7 +105,7 @@ export class CameraSession {
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
-          this.publish({ flowerCount:this.renderer.flowerCount });
+          this.publish({ flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused });
         }
         if(!document.hidden){
           if(this.photoStrip.active)this.publish({photoCountdown:this.photoStrip.countdown(time)});
@@ -120,7 +120,7 @@ export class CameraSession {
         const fullScreen=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers;
         this.publish({ hands: count,
           message: this.settings.flowers ? (count?'flowersTracking':'flowersSearching') : fullScreen ? 'fullEffectActive' : count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
-          hint: this.modeHolding ? 'modeReleaseHint' : this.settings.flowers ? 'flowersHint' : fullScreen ? 'fullEffectHint' : count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',
+          hint: this.modeHolding ? 'modeReleaseHint' : this.settings.flowers ? (this.renderer.flowerPaused?'flowersPausedHint':'flowersHint') : fullScreen ? 'fullEffectHint' : count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',
         });
         this.fpsFrames++;
         if (time-this.fpsTime > 1000) { this.publish({ fps: Math.round(this.fpsFrames*1000/(time-this.fpsTime)) });this.fpsFrames=0;this.fpsTime=time; }
