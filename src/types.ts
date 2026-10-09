@@ -15,7 +15,6 @@ export interface CameraState {
   phase: 'idle' | 'loading' | 'live' | 'error';
   hands: number;
   fps: number;
-  strength: number;
   flowerCount: number;
   photoCountdown: number | null;
   photoLocked: boolean;
@@ -24,6 +23,6 @@ export interface CameraState {
 }
 export const DEFAULT_SETTINGS: Settings = { effect: 'thermal', mirror: true, showSkeleton: true, flowers: false, autoPhoto: true, effectScope:'window' };
 export const INITIAL_STATE: CameraState = {
-  phase: 'idle', hands: 0, fps: 0, strength: .7, flowerCount: 0, photoCountdown: null, photoLocked: false,
+  phase: 'idle', hands: 0, fps: 0, flowerCount: 0, photoCountdown: null, photoLocked: false,
   message: 'ready', hint: 'initialHint',
 };

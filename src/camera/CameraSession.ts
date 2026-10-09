@@ -23,7 +23,6 @@ export class CameraSession {
   private fpsTime = 0;
   private hands: Hand[] = [];
   private gestures = new GestureController();
-  private strength = .7;
   private media: WindowMedia | null = null;
   private photoGesture = new PhotoGesture();
   private modeGesture = new EffectModeGesture();
@@ -66,7 +65,7 @@ export class CameraSession {
   }
   stop(): void {
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.gestures.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.strength = .7; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount, message: 'cameraStopped' });
+    this.gestures.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount, message: 'cameraStopped' });
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {
@@ -86,7 +85,6 @@ export class CameraSession {
             }
           }else{this.modeGesture.reset();this.modeHolding=false;}
           const gesture = this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
-          this.strength = gesture.strength;
           if (gesture.next && !this.media && !this.settings.flowers && !this.modeHolding) {
             const effect = EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
@@ -97,9 +95,9 @@ export class CameraSession {
             const photo=this.photoGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
             takePhoto=photo.capture;this.publish({photoCountdown:photo.countdown,photoLocked:photo.locked});
           }
-          this.publish({ strength: Math.round(this.strength*100)/100,flowerCount:this.renderer.flowerCount });
+          this.publish({ flowerCount:this.renderer.flowerCount });
         }
-        const visible = this.renderer.render(this.video,this.hands,this.settings,this.strength,this.media);
+        const visible = this.renderer.render(this.video,this.hands,this.settings,.7,this.media);
         if(takePhoto)this.onPhoto(this.canvas);
         const count = this.hands.length;
         const fullScreen=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers;
