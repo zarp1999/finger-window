@@ -3,6 +3,7 @@ import type { CameraState, Hand, Settings, Effect, WindowMedia, EffectScope } fr
 import { CameraSource, cameraErrorMessage } from './CameraSource';
 import { GestureController } from '../tracking/GestureController';
 import { PhotoGesture } from '../tracking/PhotoGesture';
+import { PhotoStrip } from './PhotoStrip';
 import { EffectModeGesture } from '../tracking/EffectModeGesture';
 import { HandTracker } from '../tracking/HandTracker';
 import { WindowRenderer } from '../rendering/WindowRenderer';
@@ -25,6 +26,7 @@ export class CameraSession {
   private gestures = new GestureController();
   private media: WindowMedia | null = null;
   private photoGesture = new PhotoGesture();
+  private photoStrip = new PhotoStrip();
   private modeGesture = new EffectModeGesture();
   private modeHolding=false;
 
@@ -32,12 +34,19 @@ export class CameraSession {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(canvas);
   }
   setSettings(settings: Settings): void {
+    if(settings.photoCount!==this.settings.photoCount||(!settings.autoPhoto&&this.settings.autoPhoto)){this.cancelPhoto();}
     if(settings.autoPhoto!==this.settings.autoPhoto){this.photoGesture.reset();this.publish({photoCountdown:null,photoLocked:false});}
     this.settings = settings;
     if(settings.flowers||this.media){this.modeGesture.reset();this.modeHolding=false;}
   }
-  cancelPhoto():void {this.photoGesture.cancel();this.publish({photoCountdown:null,photoLocked:true});}
-  capturePhoto():void {if(this.state.phase==='live'){this.cancelPhoto();this.onPhoto(this.canvas);}}
+  cancelPhoto():void {this.photoStrip.cancel();this.photoGesture.cancel();this.publish({photoCountdown:null,photoLocked:true,photoShot:null});}
+  capturePhoto():void {if(this.state.phase==='live'&&!this.photoStrip.active&&!document.hidden){this.cancelPhoto();this.takePhoto(performance.now());}}
+  private takePhoto(time:number):void {
+    if(this.settings.photoCount===1){this.onPhoto(this.canvas);return;}
+    const strip=this.photoStrip.capture(this.canvas,time);
+    this.publish({photoShot:strip?null:this.photoStrip.count});
+    if(strip){this.photoGesture.cancel();this.publish({photoLocked:true});this.onPhoto(strip);}
+  }
   clearFlowers():void {this.renderer.clearFlowers();this.publish({flowerCount:0});}
   setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset();this.modeGesture.reset();this.modeHolding=false; }
   private publish(patch: Partial<CameraState>): void {
@@ -64,6 +73,7 @@ export class CameraSession {
     } catch (error) { if (request === this.generation && !this.disposed) this.fail(cameraErrorMessage(error)); }
   }
   stop(): void {
+    this.photoStrip.cancel();
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
     this.gestures.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount, message: 'cameraStopped' });
   }
@@ -90,7 +100,8 @@ export class CameraSession {
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
-          if(this.modeHolding){this.cancelPhoto();}
+          if(this.photoStrip.active){ /* Once shooting starts, poses can change freely. */ }
+          else if(this.modeHolding){this.cancelPhoto();}
           else if(this.settings.autoPhoto&&!document.hidden){
             const photo=this.photoGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
             takePhoto=photo.capture;this.publish({photoCountdown:photo.countdown,photoLocked:photo.locked});
@@ -98,7 +109,7 @@ export class CameraSession {
           this.publish({ flowerCount:this.renderer.flowerCount });
         }
         const visible = this.renderer.render(this.video,this.hands,this.settings,.7,this.media);
-        if(takePhoto)this.onPhoto(this.canvas);
+        if(!document.hidden&&(takePhoto||this.photoStrip.due(time)))this.takePhoto(time);
         const count = this.hands.length;
         const fullScreen=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers;
         this.publish({ hands: count,
