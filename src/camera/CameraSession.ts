@@ -28,6 +28,7 @@ export class CameraSession {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(canvas);
   }
   setSettings(settings: Settings): void { this.settings = settings; }
+  clearFlowers():void {this.renderer.clearFlowers();this.publish({flowerCount:0});}
   setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset(); }
   private publish(patch: Partial<CameraState>): void {
     if (this.disposed) return;
@@ -54,7 +55,7 @@ export class CameraSession {
   }
   stop(): void {
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.gestures.reset(); this.strength = .7; this.renderer.reset(); this.publish({ ...INITIAL_STATE, message: 'cameraStopped' });
+    this.gestures.reset(); this.strength = .7; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount, message: 'cameraStopped' });
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {
@@ -66,17 +67,18 @@ export class CameraSession {
           this.hands = this.tracker.detect(this.video, time);
           const gesture = this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
           this.strength = gesture.strength;
-          if (gesture.next && !this.media) {
+          if (gesture.next && !this.media && !this.settings.flowers) {
             const effect = EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
-          this.publish({ strength: Math.round(this.strength*100)/100 });
+          this.renderer.updateFlowers(this.hands,time,this.settings);
+          this.publish({ strength: Math.round(this.strength*100)/100,flowerCount:this.renderer.flowerCount });
         }
         const visible = this.renderer.render(this.video,this.hands,this.settings,this.strength,this.media);
         const count = this.hands.length;
         this.publish({ hands: count,
-          message: count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
-          hint: count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',
+          message: this.settings.flowers ? (count?'flowersTracking':'flowersSearching') : count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
+          hint: this.settings.flowers ? 'flowersHint' : count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',
         });
         this.fpsFrames++;
         if (time-this.fpsTime > 1000) { this.publish({ fps: Math.round(this.fpsFrames*1000/(time-this.fpsTime)) });this.fpsFrames=0;this.fpsTime=time; }

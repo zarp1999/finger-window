@@ -20,5 +20,6 @@ export function useHandCamera(settings: Settings, onEffect: (effect: Effect) => 
   const start = useCallback(() => { void sessionRef.current?.start(); }, []);
   const stop = useCallback(() => sessionRef.current?.stop(), []);
   const setMedia = useCallback((media: WindowMedia | null) => sessionRef.current?.setMedia(media), []);
-  return { videoRef, canvasRef, state, start, stop, setMedia };
+  const clearFlowers = useCallback(()=>sessionRef.current?.clearFlowers(),[]);
+  return { videoRef, canvasRef, state, start, stop, setMedia, clearFlowers };
 }
