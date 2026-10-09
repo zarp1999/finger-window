@@ -2,6 +2,7 @@ import type { Effect } from '../types';
 import { EFFECTS } from '../types';
 import { thermalColor } from '../lib/geometry';
 import { vertexShader, fragmentShader } from './shaders';
+import { STYLE_EFFECTS, stylePixel } from './StyleEffects';
 
 /** Processes a video frame on the GPU, with a small CPU canvas as fallback. */
 export class EffectRenderer {
@@ -67,6 +68,20 @@ export class EffectRenderer {
     this.historyReady = false; this.lastTime = 0; this.lastEffect = null;
   }
   render(video: HTMLVideoElement, effect: Effect, strength = 1): HTMLCanvasElement {
+    if(effect!=='phosphor')return this.renderFrame(video,effect,strength);
+    const previous=this.lastTime,ready=this.historyReady&&this.lastEffect==='phosphor';
+    const frame=this.renderFrame(video,effect,strength),now=performance.now();
+    const ctx=this.trailContext;
+    if(ready&&previous){
+      ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1-Math.exp(-Math.min(100,now-previous)/320);
+      ctx.fillStyle='#000';ctx.fillRect(0,0,this.trail.width,this.trail.height);
+    }else ctx.clearRect(0,0,this.trail.width,this.trail.height);
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='lighten';
+    ctx.drawImage(frame,0,0,this.trail.width,this.trail.height);
+    ctx.globalCompositeOperation='source-over';this.historyReady=true;this.lastTime=now;
+    return this.trail;
+  }
+  private renderFrame(video: HTMLVideoElement, effect: Effect, strength = 1): HTMLCanvasElement {
     if (this.lastEffect !== effect) { this.reset(); this.lastEffect = effect; }
     strength = Math.max(0,Math.min(1,strength));
     const now = performance.now();
@@ -97,7 +112,8 @@ export class EffectRenderer {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = (y*w+x)*4, l = light(x,y)*255;
       let rgb: number[];
-      if (effect === 'thermal') rgb = thermalColor(l/255);
+      if (STYLE_EFFECTS.includes(effect)) rgb = stylePixel(effect,x,y,w,h,this.canvas.width,sample,now/1000);
+      else if (effect === 'thermal') rgb = thermalColor(l/255);
       else if (effect === 'mono') rgb = [l,l,l];
       else if (effect === 'negative') rgb = [255-source[i],255-source[i+1],255-source[i+2]];
       else if (effect === 'mosaic') {
