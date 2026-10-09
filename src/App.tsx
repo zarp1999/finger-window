@@ -6,30 +6,64 @@ import { RecordingPanel } from './components/RecordingPanel';
 import { usePhoto } from './hooks/usePhoto';
 import { PhotoPanel } from './components/PhotoPanel';
 import { CameraStage } from './components/CameraStage';
-import { ControlPanel } from './components/ControlPanel';
+import { BottomSheet } from './components/BottomSheet';
+import { QuickControls } from './components/QuickControls';
 import { useHandCamera } from './hooks/useHandCamera';
 import { useWebMcp } from './hooks/useWebMcp';
-import { DEFAULT_SETTINGS } from './types';
+import { DEFAULT_SETTINGS,EFFECTS } from './types';
 import { useLanguage } from './hooks/useLanguage';
 
+type Sheet='effects'|'options'|'help'|'saved'|null;
 export function App() {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const photo = usePhoto();
-  const camera = useHandCamera(settings, effect => setSettings(previous => ({...previous,effect})),photo.capture,scope=>setSettings(previous=>({...previous,effectScope:scope})));
-  const content = useWindowMedia(camera.state.phase==='live');
-  const recording = useRecording(camera.canvasRef,camera.state.phase==='live',content.media);
+  const [settings,setSettings]=useState(DEFAULT_SETTINGS),[sheet,setSheet]=useState<Sheet>(null);
+  const photo=usePhoto();
+  const camera=useHandCamera(settings,effect=>setSettings(previous=>({...previous,effect})),photo.capture,scope=>setSettings(previous=>({...previous,effectScope:scope})));
+  const content=useWindowMedia(camera.state.phase==='live');
+  const recording=useRecording(camera.canvasRef,camera.state.phase==='live',content.media);
   useEffect(()=>{camera.setMedia(content.media);if(content.media)setSettings(previous=>({...previous,flowers:false}));},[camera.setMedia,content.media]);
-  const { language, setLanguage, t } = useLanguage();
+  useEffect(()=>{if(photo.result)setSheet('saved');},[photo.result]);
+  useEffect(()=>{if(recording.state.url)setSheet('saved');},[recording.state.url]);
+  useEffect(()=>{if(photo.error)setSheet('saved');},[photo.error]);
+  const {language,setLanguage,t}=useLanguage();
   useWebMcp({state:camera.state,settings,onEffect:effect=>{content.clear();setSettings(previous=>({...previous,effect,flowers:false}));},onStop:camera.stop});
-  return <div className={`app${camera.state.phase==='live'?' live':''}`}>
-    <header><a className="brand" href="./" aria-label={t('home')}><span className="mark">⌑</span> FINGER WINDOW</a><div className="header-controls"><span className="edition">{t('edition')}</span><div className="language-switch" role="group" aria-label={t('language')}><button lang="ja" aria-pressed={language==='ja'} onClick={()=>setLanguage('ja')}>日本語</button><button lang="mn" aria-pressed={language==='mn'} onClick={()=>setLanguage('mn')}>Монгол</button></div></div></header>
+  const sheetTitle=t(sheet==='effects'?'effect':sheet==='help'?'howTo':sheet==='saved'?'savedMedia':'controls');
+  const currentEffect=settings.flowers?t('flowerMode'):content.media?content.media.name:t(settings.effect);
+  return <div className={`app compact-app${camera.state.phase==='live'?' live':''}`}>
+    <header><a className="brand" href="./" aria-label={t('home')}><span className="mark">⌑</span> FINGER WINDOW</a><div className="language-switch" role="group" aria-label={t('language')}><button lang="ja" aria-pressed={language==='ja'} onClick={()=>setLanguage('ja')}>日本語</button><button lang="mn" aria-pressed={language==='mn'} onClick={()=>setLanguage('mn')}>Монгол</button></div></header>
     <main>
-      <section className="workspace" aria-label={t('workspace')}>
-        <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} effectScope={!settings.flowers&&!content.media?settings.effectScope:null} />
-        <ControlPanel settings={settings} state={camera.state} onSettings={next=>{if(next.effect!==settings.effect||next.flowers!==settings.flowers)content.clear();setSettings(next);}} onClearFlowers={camera.clearFlowers} t={t} mediaPanel={<><PhotoPanel photo={photo} state={camera.state} settings={settings} onSettings={setSettings} onCapture={camera.capturePhoto} t={t}/><MediaPanel content={content} live={camera.state.phase==='live'} t={t}/><RecordingPanel recording={recording} live={camera.state.phase==='live'} t={t}/></>} />
+      <section className="camera-area" aria-label={t('workspace')}>
+        <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} effectScope={!settings.flowers&&!content.media?settings.effectScope:null}/>
+        {(photo.busy||recording.state.phase==='stopping'||recording.state.message)&&<div className="camera-notice" role="status">{t(photo.busy?'photoPreparing':recording.state.phase==='stopping'?'recordFinishing':recording.state.message!)}</div>}
       </section>
-      <div className="guide"><span className="guide-number">{t('howTo')}</span><p><b>1</b> {t('step1')} <span>/</span> <b>2</b> {t('step2')} <span>/</span> <b>3</b> {t('step3')}</p></div>
+      <QuickControls settings={settings} state={camera.state} photo={photo} recording={recording} effectLabel={currentEffect} onSettings={setSettings} onCapture={camera.capturePhoto}
+        onEffects={()=>setSheet('effects')} onOptions={()=>setSheet('options')} onHelp={()=>setSheet('help')} onSaved={()=>setSheet('saved')}
+        onFlowers={()=>{content.clear();setSettings(previous=>({...previous,flowers:!previous.flowers}));}} t={t}/>
     </main>
-    <footer><span>{t('footer')}</span><span>{t('noUpload')}</span></footer>
+    <BottomSheet open={sheet!==null} title={sheetTitle} closeLabel={t('close')} onClose={()=>setSheet(null)}>
+      {sheet==='effects'&&<div className="effects" role="group" aria-label={t('effectGroup')}>{EFFECTS.map(effect=>
+        <button key={effect} className={`effect${settings.effect===effect&&!settings.flowers&&!content.media?' active':''}`} data-effect={effect} aria-pressed={settings.effect===effect&&!settings.flowers&&!content.media} onClick={()=>{content.clear();setSettings(previous=>({...previous,effect,flowers:false}));setSheet(null);}}><span className={`swatch ${effect}`}/>{t(effect)}</button>
+      )}</div>}
+      {sheet==='options'&&<>
+        <section className="sheet-section">
+          <label className="toggle">{t('mirror')}<input id="mirror" type="checkbox" checked={settings.mirror} onChange={event=>setSettings(previous=>({...previous,mirror:event.target.checked}))}/><span className="switch"/></label>
+          <label className="toggle">{t('photoAutomatic')}<input id="autoPhoto" type="checkbox" checked={settings.autoPhoto} onChange={event=>setSettings(previous=>({...previous,autoPhoto:event.target.checked}))}/><span className="switch"/></label>
+          <p className="note">{t('photoHelp')}</p>
+        </section>
+        <MediaPanel content={content} live={camera.state.phase==='live'} t={t}/>
+        {(settings.flowers||camera.state.flowerCount>0)&&<section className="sheet-section"><p className="control-label">{t('flowerMode')}</p><div className="status-row"><span>{t('flowerCount')}</span><strong id="flowerCount">{camera.state.flowerCount}</strong></div><button id="clearFlowers" className="secondary" disabled={!camera.state.flowerCount} onClick={camera.clearFlowers}>{t('clearFlowers')}</button></section>}
+      </>}
+      {sheet==='help'&&<>
+        <section className="sheet-section"><h3>{t('photoTitle')}</h3><p>{t('photoHelp')}</p><p>{t('photoRelease')}</p><p>{t('photoBoothHelp')}</p></section>
+        <section className="sheet-section"><h3>{t('effect')}</h3><p>{t('gestureHelp')}</p><p>{t('modeGestureHelp')}</p></section>
+        <section className="sheet-section"><h3>{t('flowerMode')}</h3><p>{t('flowerHelp')}</p><div className="flower-palette">🌸 🌹 🌻 🌷 🌼 🌺</div></section>
+        <section className="sheet-section"><h3>{t('recordTitle')}</h3><p>{t('recordHelp')}</p>{!recording.supported&&<p>{t('recordUnsupported')}</p>}</section>
+        <section className="sheet-section"><h3>{t('tipLabel')}</h3><p>{t('tip')}</p><p>{t('privacy')}</p></section>
+      </>}
+      {sheet==='saved'&&<>
+        {!photo.result&&!recording.state.url&&!photo.busy&&!photo.error&&<p className="empty-saved">{t('noSavedMedia')}</p>}
+        {(photo.result||photo.busy||photo.error)&&<PhotoPanel resultOnly photo={photo} state={camera.state} settings={settings} onSettings={setSettings} onCapture={camera.capturePhoto} t={t}/>}
+        {(recording.state.url||recording.state.message||recording.shareError)&&<RecordingPanel resultOnly recording={recording} live={camera.state.phase==='live'} t={t}/>}
+      </>}
+    </BottomSheet>
   </div>;
 }

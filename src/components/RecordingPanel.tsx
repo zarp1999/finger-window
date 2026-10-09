@@ -1,15 +1,15 @@
 import type { TranslationKey } from '../i18n';
 import type { useRecording } from '../hooks/useRecording';
 
-export function RecordingPanel({recording,live,t}:{recording:ReturnType<typeof useRecording>;live:boolean;t:(key:TranslationKey)=>string}) {
+export function RecordingPanel({recording,live,t,resultOnly=false}:{recording:ReturnType<typeof useRecording>;live:boolean;t:(key:TranslationKey)=>string;resultOnly?:boolean}) {
   const {state}=recording,busy=state.phase==='recording'||state.phase==='stopping';
   const elapsed=`${Math.floor(state.seconds/60).toString().padStart(2,'0')}:${(state.seconds%60).toString().padStart(2,'0')}`;
   return <section className="record-control">
     <p className="control-label">{t('recordTitle')}</p>
-    <p className="note">{t('recordHelp')}</p>
+    {!resultOnly&&<p className="note">{t('recordHelp')}</p>}
     {!recording.supported?<p className="status error">{t('recordUnsupported')}</p>:<>
-      <div className="media-actions"><button id="recordStart" className="secondary" disabled={!live||busy||recording.sharing} onClick={recording.start}>{t('recordStart')}</button>
-      <button id="recordStop" className="secondary" disabled={state.phase!=='recording'} onClick={recording.stop}>{t('recordStop')}</button></div>
+      {!resultOnly&&<div className="media-actions"><button id="recordStart" className="secondary" disabled={!live||busy||recording.sharing} onClick={recording.start}>{t('recordStart')}</button>
+      <button id="recordStop" className="secondary" disabled={state.phase!=='recording'} onClick={recording.stop}>{t('recordStop')}</button></div>}
       {busy&&<p className="record-state" role="status">{t(state.phase==='stopping'?'recordFinishing':'recordActive')} {elapsed}</p>}
       {state.url&&state.file&&<div className="record-result">
         <video className="record-preview" src={state.url} controls playsInline preload="metadata" aria-label={t('recordPreview')} />

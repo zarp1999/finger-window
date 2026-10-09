@@ -1,5 +1,6 @@
 export type Language = 'ja' | 'mn';
 const ja = {
+ settingsShort:'設定',close:'閉じる',oneShotShort:'1枚',threeShotShort:'3枚',captureShort:'撮影',recordShort:'録画',flowersShort:'花',helpShort:'使い方',savedMedia:'写真・動画を保存',noSavedMedia:'撮影した写真や録画した動画がここに表示されます。',
  photoMode:'撮影モード',photoSingle:'1枚撮影',photoBooth:'3枚・Photo Booth',photoBoothHelp:'最初の撮影後、2秒間隔で合計3枚撮影します。手を自由に動かせます。白い余白付きの縦長写真として保存します。',photoBoothProgress:'撮影済み',photoPose:'次のポーズへ',
  sprite:'16-bit Sprite',mixed:'Mixed Media',raster:'Raster Lines',stipple:'Stipple Duotone',xerox:'Xerox Collage',
  windowMode:'窓モード',fullMode:'全画面モード',modeGestureHelp:'片手だけでVサイン（人差し指と中指を伸ばし、薬指と小指を曲げる）を約1秒保つと、窓・全画面を切り替えます。指を戻すと再び切り替えられます。',fullEffectActive:'全画面にエフェクトを表示しています',fullEffectHint:'Vサインを約1秒保つと窓モードへ戻ります',modeReleaseHint:'Vサインを約1秒保って切り替え · 指を戻すと再び使えます',
@@ -15,6 +16,7 @@ const ja = {
 };
 export type TranslationKey = keyof typeof ja;
 const mn: Record<TranslationKey,string> = {
+ settingsShort:'Тохир.',close:'Хаах',oneShotShort:'1 зураг',threeShotShort:'3 зураг',captureShort:'Зураг',recordShort:'Бичлэг',flowersShort:'Цэцэг',helpShort:'Заавар',savedMedia:'Зураг, видео хадгалах',noSavedMedia:'Авсан зураг болон бичсэн видео энд харагдана.',
  photoMode:'Зураг авах горим',photoSingle:'1 зураг',photoBooth:'3 зураг · Photo Booth',photoBoothHelp:'Эхний зургийн дараа 2 секунд тутам нийт 3 зураг авна. Гараа чөлөөтэй хөдөлгөж болно. Цагаан хүрээтэй босоо нэг зураг болгон хадгална.',photoBoothProgress:'Авсан зураг',photoPose:'Дараагийн байрлалаа аваарай',
  sprite:'16-bit Sprite',mixed:'Mixed Media',raster:'Raster Lines',stipple:'Stipple Duotone',xerox:'Xerox Collage',
  windowMode:'Цонхны горим',fullMode:'Бүтэн дэлгэцийн горим',modeGestureHelp:'Нэг гараар V тэмдэг (долоовор, дунд хуруугаа тэнийлгэж, ядам, чигчий хуруугаа нугалах) 1 секунд барихад цонх ба бүтэн дэлгэцийн горим солигдоно. Хуруугаа буцаасны дараа дахин сольж болно.',fullEffectActive:'Эффектийг бүтэн дэлгэцээр харуулж байна',fullEffectHint:'V тэмдгийг 1 секунд барьж цонхны горимд буцна',modeReleaseHint:'V тэмдгийг 1 секунд барьж солино · Хуруугаа буцааж дахин ашиглана',
