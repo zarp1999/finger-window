@@ -9,10 +9,11 @@ export function photoPose(hands:Hand[],aspect:number):boolean {
 export class PhotoGesture {
   private stableSince:number|null=null;
   private countdownSince:number|null=null;
-  private lastValid=0;
   private releasedSince:number|null=null;
   private locked=false;
-  reset():void {this.stableSince=null;this.countdownSince=null;this.lastValid=0;this.releasedSince=null;this.locked=false;}
+  get active():boolean{return this.countdownSince!==null;}
+  reset():void {this.stableSince=null;this.countdownSince=null;this.releasedSince=null;this.locked=false;}
+  start(time:number):void{this.reset();this.countdownSince=time;}
   cancel():void {this.reset();this.locked=true;}
   update(hands:Hand[],time:number,aspect:number):{countdown:number|null;capture:boolean;locked:boolean} {
     const frame=photoPose(hands,aspect);
@@ -22,15 +23,14 @@ export class PhotoGesture {
       return {countdown:null,capture:false,locked:this.locked};
     }
     if(frame){
-      this.lastValid=time;this.stableSince??=time;
+      this.stableSince??=time;
       if(this.countdownSince===null&&time-this.stableSince>=450)this.countdownSince=time;
     }else{
       this.stableSince=null;
-      if(this.countdownSince!==null&&time-this.lastValid>300){this.cancel();this.releasedSince=time;}
     }
     if(this.countdownSince===null)return {countdown:null,capture:false,locked:this.locked};
     const elapsed=time-this.countdownSince;
-    if(elapsed>=3000&&frame){this.cancel();return {countdown:null,capture:true,locked:true};}
+    if(elapsed>=3000){this.cancel();return {countdown:null,capture:true,locked:true};}
     return {countdown:Math.max(1,3-Math.floor(elapsed/1000)),capture:false,locked:false};
   }
 }

@@ -6,12 +6,13 @@ export class PhotoStrip {
   get active():boolean{return this.count>0;}
   cancel():void{this.frames=[];this.nextAt=0;}
   due(time:number):boolean{return this.active&&time>=this.nextAt;}
+  countdown(time:number):number|null{return this.active?Math.max(1,Math.ceil((this.nextAt-time)/1000)):null;}
   capture(source:HTMLCanvasElement,time:number):HTMLCanvasElement|null {
     const frame=document.createElement('canvas');
     const scale=Math.min(1,800/source.width,1000/source.height);
     frame.width=Math.max(1,Math.round(source.width*scale));frame.height=Math.max(1,Math.round(source.height*scale));
     frame.getContext('2d')!.drawImage(source,0,0,frame.width,frame.height);
-    this.frames.push(frame);this.nextAt=time+2000;
+    this.frames.push(frame);this.nextAt=time+3000;
     if(this.count<3)return null;
     const margin=Math.max(12,Math.round(frame.width*.04)),strip=document.createElement('canvas');
     strip.width=frame.width+margin*2;strip.height=frame.height*3+margin*4;

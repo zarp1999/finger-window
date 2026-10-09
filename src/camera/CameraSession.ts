@@ -40,11 +40,16 @@ export class CameraSession {
     if(settings.flowers||this.media){this.modeGesture.reset();this.modeHolding=false;}
   }
   cancelPhoto():void {this.photoStrip.cancel();this.photoGesture.cancel();this.publish({photoCountdown:null,photoLocked:true,photoShot:null});}
-  capturePhoto():void {if(this.state.phase==='live'&&!this.photoStrip.active&&!document.hidden){this.cancelPhoto();this.takePhoto(performance.now());}}
+  capturePhoto():void {
+    if(this.state.phase!=='live'||this.photoStrip.active||this.photoGesture.active||document.hidden)return;
+    this.cancelPhoto();
+    if(this.settings.photoCount===3){this.photoGesture.start(performance.now());this.publish({photoCountdown:3,photoLocked:false});}
+    else this.takePhoto(performance.now());
+  }
   private takePhoto(time:number):void {
     if(this.settings.photoCount===1){this.onPhoto(this.canvas);return;}
     const strip=this.photoStrip.capture(this.canvas,time);
-    this.publish({photoShot:strip?null:this.photoStrip.count});
+    this.publish({photoShot:strip?null:this.photoStrip.count,photoCountdown:strip?null:3});
     if(strip){this.photoGesture.cancel();this.publish({photoLocked:true});this.onPhoto(strip);}
   }
   clearFlowers():void {this.renderer.clearFlowers();this.publish({flowerCount:0});}
@@ -100,12 +105,14 @@ export class CameraSession {
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
-          if(this.photoStrip.active){ /* Once shooting starts, poses can change freely. */ }
-          else if(this.settings.autoPhoto&&!document.hidden){
+          this.publish({ flowerCount:this.renderer.flowerCount });
+        }
+        if(!document.hidden){
+          if(this.photoStrip.active)this.publish({photoCountdown:this.photoStrip.countdown(time)});
+          else if(this.settings.autoPhoto||this.photoGesture.active){
             const photo=this.photoGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
             takePhoto=photo.capture;this.publish({photoCountdown:photo.countdown,photoLocked:photo.locked});
           }
-          this.publish({ flowerCount:this.renderer.flowerCount });
         }
         const visible = this.renderer.render(this.video,this.hands,this.settings,.7,this.media);
         if(!document.hidden&&(takePhoto||this.photoStrip.due(time)))this.takePhoto(time);
