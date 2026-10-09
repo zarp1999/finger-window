@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useWindowMedia } from './hooks/useWindowMedia';
 import { MediaPanel } from './components/MediaPanel';
+import { useRecording } from './hooks/useRecording';
+import { RecordingPanel } from './components/RecordingPanel';
 import { CameraStage } from './components/CameraStage';
 import { ControlPanel } from './components/ControlPanel';
 import { useHandCamera } from './hooks/useHandCamera';
@@ -12,6 +14,7 @@ export function App() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const camera = useHandCamera(settings, effect => setSettings(previous => ({...previous,effect})));
   const content = useWindowMedia(camera.state.phase==='live');
+  const recording = useRecording(camera.canvasRef,camera.state.phase==='live',content.media);
   useEffect(()=>{camera.setMedia(content.media);},[camera.setMedia,content.media]);
   const { language, setLanguage, t } = useLanguage();
   useWebMcp({state:camera.state,settings,onEffect:effect=>{content.clear();setSettings(previous=>({...previous,effect}));},onStop:camera.stop});
@@ -20,7 +23,7 @@ export function App() {
     <main>
       <section className="workspace" aria-label={t('workspace')}>
         <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} t={t} />
-        <ControlPanel settings={settings} state={camera.state} onSettings={next=>{if(next.effect!==settings.effect)content.clear();setSettings(next);}} onStop={camera.stop} t={t} mediaPanel={<MediaPanel content={content} live={camera.state.phase==='live'} t={t}/>} />
+        <ControlPanel settings={settings} state={camera.state} onSettings={next=>{if(next.effect!==settings.effect)content.clear();setSettings(next);}} onStop={camera.stop} t={t} mediaPanel={<><MediaPanel content={content} live={camera.state.phase==='live'} t={t}/><RecordingPanel recording={recording} live={camera.state.phase==='live'} t={t}/></>} />
       </section>
       <div className="guide"><span className="guide-number">{t('howTo')}</span><p><b>1</b> {t('step1')} <span>/</span> <b>2</b> {t('step2')} <span>/</span> <b>3</b> {t('step3')}</p></div>
     </main>
