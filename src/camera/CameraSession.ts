@@ -37,7 +37,7 @@ export class CameraSession {
     if(settings.photoCount!==this.settings.photoCount||(!settings.autoPhoto&&this.settings.autoPhoto)){this.cancelPhoto();}
     if(settings.autoPhoto!==this.settings.autoPhoto){this.photoGesture.reset();this.publish({photoCountdown:null,photoLocked:false});}
     this.settings = settings;
-    if(settings.flowers||this.media){this.modeGesture.reset();this.modeHolding=false;}
+    if(settings.flowers||settings.pen||this.media){this.modeGesture.reset();this.modeHolding=false;}
   }
   cancelPhoto():void {this.photoStrip.cancel();this.photoGesture.cancel();this.publish({photoCountdown:null,photoLocked:true,photoShot:null});}
   capturePhoto():void {
@@ -52,6 +52,7 @@ export class CameraSession {
     this.publish({photoShot:strip?null:this.photoStrip.count,photoCountdown:strip?null:3});
     if(strip){this.photoGesture.cancel();this.publish({photoLocked:true});this.onPhoto(strip);}
   }
+  clearPen():void {this.renderer.clearPen();this.publish({penCount:0});}
   clearFlowers():void {this.renderer.clearFlowers();this.publish({flowerCount:0});}
   setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset();this.modeGesture.reset();this.modeHolding=false; }
   private publish(patch: Partial<CameraState>): void {
@@ -80,7 +81,7 @@ export class CameraSession {
   stop(): void {
     this.photoStrip.cancel();
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.gestures.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount, message: 'cameraStopped' });
+    this.gestures.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused,penCount:this.renderer.penCount,penPaused:this.renderer.penPaused, message: 'cameraStopped' });
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {
@@ -91,7 +92,7 @@ export class CameraSession {
         if (this.video.currentTime !== this.lastVideo && time-this.lastDetection >= 33) {
           this.lastVideo = this.video.currentTime; this.lastDetection = time;
           this.hands = this.tracker.detect(this.video, time);
-          if(!this.media&&!this.settings.flowers&&!document.hidden){
+          if(!this.media&&!this.settings.flowers&&!this.settings.pen&&!document.hidden){
             const mode=this.modeGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
             this.modeHolding=mode.active;
             if(mode.toggle){
@@ -100,12 +101,12 @@ export class CameraSession {
             }
           }else{this.modeGesture.reset();this.modeHolding=false;}
           const gesture = this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
-          if (gesture.next && !this.media && !this.settings.flowers && !this.modeHolding && !photoPose(this.hands,this.video.videoWidth/this.video.videoHeight) && this.state.photoCountdown===null) {
+          if (gesture.next && !this.media && !this.settings.flowers&&!this.settings.pen && !this.modeHolding && !photoPose(this.hands,this.video.videoWidth/this.video.videoHeight) && this.state.photoCountdown===null) {
             const effect = EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
-          this.publish({ flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused });
+          this.publish({ flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused,penCount:this.renderer.penCount,penPaused:this.renderer.penPaused });
         }
         if(!document.hidden){
           if(this.photoStrip.active)this.publish({photoCountdown:this.photoStrip.countdown(time)});
@@ -117,10 +118,10 @@ export class CameraSession {
         const visible = this.renderer.render(this.video,this.hands,this.settings,.7,this.media);
         if(!document.hidden&&(takePhoto||this.photoStrip.due(time)))this.takePhoto(time);
         const count = this.hands.length;
-        const fullScreen=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers;
+        const fullScreen=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers&&!this.settings.pen;
         this.publish({ hands: count,
-          message: this.settings.flowers ? (count?'flowersTracking':'flowersSearching') : fullScreen ? 'fullEffectActive' : count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
-          hint: this.modeHolding ? 'modeReleaseHint' : this.settings.flowers ? (this.renderer.flowerPaused?'flowersPausedHint':'flowersHint') : fullScreen ? 'fullEffectHint' : count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',
+          message: this.settings.pen ? (count?'penTracking':'penSearching') : this.settings.flowers ? (count?'flowersTracking':'flowersSearching') : fullScreen ? 'fullEffectActive' : count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
+          hint: this.settings.pen ? (this.renderer.penPaused?'penPausedHint':'penHint') : this.modeHolding ? 'modeReleaseHint' : this.settings.flowers ? (this.renderer.flowerPaused?'flowersPausedHint':'flowersHint') : fullScreen ? 'fullEffectHint' : count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',
         });
         this.fpsFrames++;
         if (time-this.fpsTime > 1000) { this.publish({ fps: Math.round(this.fpsFrames*1000/(time-this.fpsTime)) });this.fpsFrames=0;this.fpsTime=time; }

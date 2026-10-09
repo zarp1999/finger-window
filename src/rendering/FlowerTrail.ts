@@ -16,6 +16,9 @@ export function closedFist(hand:Hand,aspect:number):boolean {
 
 /** Persistent raster layer: flowers never expire and memory stays bounded. */
 export class FlowerTrail {
+  constructor(private tool:'flowers'|'pen'='flowers'){}
+  color='#ffda73';
+  size=5;
   private layer=document.createElement('canvas');
   private context=this.layer.getContext('2d')!;
   private sprites=FLOWERS.map(flower=>{
@@ -68,7 +71,17 @@ export class FlowerTrail {
     hands.forEach((hand,index)=>{
       const key=hand.side??String(index);present.add(key);
       if(!indexExtended(hand,aspect)){this.last.delete(key);return;}
+      // A V sign is reserved for photographs; lift the pen for this pose.
+      if(this.tool==='pen'&&distance(hand[12],hand[0],aspect)>distance(hand[10],hand[0],aspect)*1.12){this.last.delete(key);return;}
       const point=this.point(hand,mirror),last=this.last.get(key);
+      if(this.tool==='pen'){
+        const gap=last?Math.hypot(point.x-last.x,point.y-last.y):Infinity;
+        const next=last&&gap<this.layer.width*.25?{x:last.x+(point.x-last.x)*.65,y:last.y+(point.y-last.y)*.65}:point;
+        const c=this.context;c.strokeStyle=this.color;c.fillStyle=this.color;c.lineWidth=this.size;c.lineCap='round';c.lineJoin='round';
+        if(!last||gap>=this.layer.width*.25){c.beginPath();c.arc(next.x,next.y,this.size/2,0,Math.PI*2);c.fill();this.count++;}
+        else if(gap>.5){c.beginPath();c.moveTo(last.x,last.y);c.lineTo(next.x,next.y);c.stroke();}
+        this.last.set(key,next);return;
+      }
       const spacing=Math.max(22,Math.min(38,this.layer.width*.04));
       if(!last||Math.hypot(point.x-last.x,point.y-last.y)>=spacing){
         this.stamp(point,this.count%FLOWERS.length,true);this.count++;this.last.set(key,point);
@@ -85,6 +98,7 @@ export class FlowerTrail {
   draw(context:CanvasRenderingContext2D,hands:Hand[],mirror:boolean):void {
     if(!this.enabled)return;
     context.drawImage(this.layer,0,0);
+    if(this.tool==='pen')return;
     if(this.paused||this.leftSince!==null||this.fistSince!==null)return;
     hands.filter(hand=>indexExtended(hand,this.layer.width/this.layer.height)).forEach(hand=>this.stamp(this.point(hand,mirror),this.count%FLOWERS.length,false,context));
   }
