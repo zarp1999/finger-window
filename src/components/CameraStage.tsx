@@ -14,6 +14,7 @@ export function CameraStage({ videoRef, canvasRef, state, onStart, t }: Props) {
   return <div className="stage" id="stage">
     <video ref={videoRef} id="video" autoPlay muted playsInline aria-hidden="true" />
     <canvas ref={canvasRef} id="output" width="960" height="540" aria-label={t('output')} />
+    {live&&state.photoCountdown!==null&&<div id="photoCountdown" className="photo-countdown" role="status" aria-live="assertive" aria-atomic="true"><span>{state.photoCountdown}</span><small>{t('photoHold')}</small></div>}
     <div className="stage-top"><span id="modeLabel">{t(live ? 'live' : 'standby')}</span><span id="fps">{state.fps || '—'} FPS</span></div>
     <div id="welcome" className="welcome" hidden={live}>
       <span className="window-icon" aria-hidden="true" /><h2>{t('welcome')}</h2>

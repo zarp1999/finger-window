@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS, INITIAL_STATE, EFFECTS } from '../types';
 import type { CameraState, Hand, Settings, Effect, WindowMedia } from '../types';
 import { CameraSource, cameraErrorMessage } from './CameraSource';
 import { GestureController } from '../tracking/GestureController';
+import { PhotoGesture } from '../tracking/PhotoGesture';
 import { HandTracker } from '../tracking/HandTracker';
 import { WindowRenderer } from '../rendering/WindowRenderer';
 
@@ -23,11 +24,17 @@ export class CameraSession {
   private gestures = new GestureController();
   private strength = .7;
   private media: WindowMedia | null = null;
+  private photoGesture = new PhotoGesture();
 
-  constructor(private video: HTMLVideoElement, canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}) {
+  constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}, private onPhoto:(canvas:HTMLCanvasElement)=>void = ()=>{}) {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(canvas);
   }
-  setSettings(settings: Settings): void { this.settings = settings; }
+  setSettings(settings: Settings): void {
+    if(settings.autoPhoto!==this.settings.autoPhoto){this.photoGesture.reset();this.publish({photoCountdown:null,photoLocked:false});}
+    this.settings = settings;
+  }
+  cancelPhoto():void {this.photoGesture.cancel();this.publish({photoCountdown:null,photoLocked:true});}
+  capturePhoto():void {if(this.state.phase==='live'){this.cancelPhoto();this.onPhoto(this.canvas);}}
   clearFlowers():void {this.renderer.clearFlowers();this.publish({flowerCount:0});}
   setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset(); }
   private publish(patch: Partial<CameraState>): void {
@@ -55,13 +62,14 @@ export class CameraSession {
   }
   stop(): void {
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.gestures.reset(); this.strength = .7; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount, message: 'cameraStopped' });
+    this.gestures.reset(); this.photoGesture.reset(); this.strength = .7; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount, message: 'cameraStopped' });
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {
     if (this.disposed || this.state.phase !== 'live') return;
     try {
       if (this.video.readyState >= 2) {
+        let takePhoto=false;
         if (this.video.currentTime !== this.lastVideo && time-this.lastDetection >= 33) {
           this.lastVideo = this.video.currentTime; this.lastDetection = time;
           this.hands = this.tracker.detect(this.video, time);
@@ -72,9 +80,14 @@ export class CameraSession {
             this.settings = { ...this.settings, effect }; this.onEffect(effect);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
+          if(this.settings.autoPhoto&&!document.hidden){
+            const photo=this.photoGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
+            takePhoto=photo.capture;this.publish({photoCountdown:photo.countdown,photoLocked:photo.locked});
+          }
           this.publish({ strength: Math.round(this.strength*100)/100,flowerCount:this.renderer.flowerCount });
         }
         const visible = this.renderer.render(this.video,this.hands,this.settings,this.strength,this.media);
+        if(takePhoto)this.onPhoto(this.canvas);
         const count = this.hands.length;
         this.publish({ hands: count,
           message: this.settings.flowers ? (count?'flowersTracking':'flowersSearching') : count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
