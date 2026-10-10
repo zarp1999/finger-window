@@ -130,7 +130,7 @@ export class CameraSession {
         drawCameraPreview(this.sourceFrame,this.canvas,this.canvas.clientWidth||this.sourceFrame.width,this.canvas.clientHeight||this.sourceFrame.height);
         if(!document.hidden&&(takePhoto||this.photoStrip.due(time)))this.takePhoto(time);
         const count = this.hands.length;
-        const fullScreen=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers&&!this.settings.pen;
+        const fullScreen=this.settings.effectScope==='full'&&!this.media;
         this.publish({ hands: count,
           message: this.settings.pen ? (count?'penTracking':'penSearching') : this.settings.flowers ? (count?'flowersTracking':'flowersSearching') : fullScreen ? 'fullEffectActive' : count === 2 ? (visible ? 'tracking' : 'openFingers') : count ? 'oneHand' : 'searching',
           hint: this.settings.pen ? (this.renderer.penPaused?'penPausedHint':'penHint') : this.modeHolding ? 'modeReleaseHint' : this.settings.flowers ? (this.renderer.flowerPaused?'flowersPausedHint':'flowersHint') : fullScreen ? 'fullEffectHint' : count === 2 ? (visible ? 'windowFollowing' : 'widenWindow') : count ? 'showOtherHand' : 'openBoth',

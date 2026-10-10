@@ -32,10 +32,10 @@ export function App() {
 
     <main>
       <section className="camera-area" aria-label={t('workspace')}>
-        <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} effectScope={!settings.flowers&&!settings.pen&&!content.media?settings.effectScope:null}/>
+        <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} effectScope={!content.media&&(!settings.flowers&&!settings.pen||settings.effectScope==='full')?settings.effectScope:null}/>
         {(photo.busy||recording.state.phase==='stopping'||recording.state.message)&&<div className="camera-notice" role="status">{t(photo.busy?'photoPreparing':recording.state.phase==='stopping'?'recordFinishing':recording.state.message!)}</div>}
       </section>
-      <QuickControls settings={settings} state={camera.state} photo={photo} recording={recording} effectLabel={currentEffect} onSettings={setSettings} onCapture={camera.capturePhoto}
+      <QuickControls settings={settings} state={camera.state} photo={photo} recording={recording} effectLabel={(settings.flowers||settings.pen)&&settings.effectScope==='full'?t(settings.effect)+' · '+currentEffect:currentEffect} onSettings={setSettings} onCapture={camera.capturePhoto}
         onEffects={()=>setSheet('effects')} onOptions={()=>setSheet('options')} onHelp={()=>setSheet('help')} onSaved={()=>setSheet('saved')}
         onPen={()=>{content.clear();setSettings(previous=>({...previous,pen:!previous.pen,flowers:false}));}} onFlowers={()=>{content.clear();setSettings(previous=>({...previous,flowers:!previous.flowers,pen:false}));}} t={t}/>
     </main>
