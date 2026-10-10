@@ -1,6 +1,7 @@
 import type { Hand, Landmark, Point } from '../types';
 
 export const FLOWERS = ['🌸','🌹','🌻','🌷','🌼','🌺'] as const;
+interface FlowerStamp extends Point {index:number;size:number;angle:number}
 function distance(a:Landmark,b:Landmark,aspect:number):number {
   return Math.hypot((a.x-b.x)*aspect,a.y-b.y,(a.z-b.z)*aspect);
 }
@@ -33,18 +34,32 @@ export class FlowerTrail {
   private leftSince:number|null=null;
   private leftReleased:number|null=null;
   private leftLatched=false;
+  private stamps:FlowerStamp[]=[];
+  private baked:HTMLCanvasElement|null=null;
+  private falling:FlowerStamp[]=[];
+  private fallingBaked:HTMLCanvasElement|null=null;
+  private fallSince:number|null=null;
   paused=false;
   count=0;
   resize(width:number,height:number):void {
     if(this.layer.width===width&&this.layer.height===height)return;
     const previous=document.createElement('canvas');previous.width=this.layer.width;previous.height=this.layer.height;
+    const sx=width/this.layer.width,sy=height/this.layer.height;
+    this.stamps.forEach(f=>{f.x*=sx;f.y*=sy;f.size*=sx;});
+    if(this.baked){const copy=document.createElement('canvas');copy.width=width;copy.height=height;copy.getContext('2d')!.drawImage(this.baked,0,0,width,height);this.baked=copy;}
+    this.falling=[];this.fallingBaked=null;this.fallSince=null;
     previous.getContext('2d')!.drawImage(this.layer,0,0);
     this.layer.width=width;this.layer.height=height;this.context.drawImage(previous,0,0,width,height);
     this.resetGesture();
   }
   resetGesture():void {this.last.clear();this.fistSince=null;this.latched=false;this.leftSince=null;this.leftReleased=null;this.leftLatched=false;}
-  clear():void {this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.last.clear();}
-  setEnabled(enabled:boolean):void {if(enabled!==this.enabled){this.resetGesture();this.paused=false;}this.enabled=enabled;}
+  clear():void {this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.last.clear();this.stamps=[];this.baked=null;this.falling=[];this.fallingBaked=null;this.fallSince=null;}
+  private drop(time:number):void {
+    if(this.fallSince!==null||!this.count)return;
+    this.falling=this.stamps;this.fallingBaked=this.baked;this.fallSince=time;
+    this.stamps=[];this.baked=null;this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.last.clear();
+  }
+  setEnabled(enabled:boolean):void {if(enabled!==this.enabled){this.resetGesture();this.paused=false;this.falling=[];this.fallingBaked=null;this.fallSince=null;}this.enabled=enabled;}
   private point(hand:Hand,mirror:boolean):Point {return{x:(mirror?1-hand[8].x:hand[8].x)*this.layer.width,y:hand[8].y*this.layer.height};}
   update(hands:Hand[],time:number,mirror:boolean):void {
     if(!this.enabled)return;
@@ -61,12 +76,12 @@ export class FlowerTrail {
     const right=hands.find(hand=>hand.side==='Right'&&(hand.confidence??0)>=.75);
     if(right&&closedFist(right,aspect)){
       this.fistSince??=time;
-      if(time-this.fistSince>=400&&!this.latched){this.clear();this.latched=true;}
+      if(time-this.fistSince>=400&&!this.latched){if(this.tool==='flowers')this.drop(time);else this.clear();this.latched=true;}
       // Suppress both hands while clearing, so left-hand flowers cannot reappear.
       this.last.clear();return;
     }
     this.fistSince=null;this.latched=false;
-    if(this.paused||leftClosed){this.last.clear();return;}
+    if(this.paused||leftClosed||this.fallSince!==null){this.last.clear();return;}
     const present=new Set<string>();
     hands.forEach((hand,index)=>{
       const key=hand.side??String(index);present.add(key);
@@ -91,14 +106,33 @@ export class FlowerTrail {
   }
   private stamp(point:Point,index:number,persistent:boolean,target=this.context):void {
     const size=Math.max(30,Math.min(64,this.layer.width*.06));
+    const angle=persistent?((this.count%7)-3)*.08:0;
+    if(persistent){
+      // Keep particle metadata bounded; older flowers remain in a raster snapshot.
+      if(this.stamps.length===1000){const baked=document.createElement('canvas');baked.width=this.layer.width;baked.height=this.layer.height;baked.getContext('2d')!.drawImage(this.layer,0,0);this.baked=baked;this.stamps=[];}
+      this.stamps.push({...point,index,size,angle});
+    }
     target.save();target.translate(point.x,point.y);
-    if(persistent)target.rotate(((this.count%7)-3)*.08);
+    if(persistent)target.rotate(angle);
     target.drawImage(this.sprites[index],-size/2,-size/2,size,size);target.restore();
   }
-  draw(context:CanvasRenderingContext2D,hands:Hand[],mirror:boolean):void {
+  draw(context:CanvasRenderingContext2D,hands:Hand[],mirror:boolean,time=performance.now()):void {
     if(!this.enabled)return;
     context.drawImage(this.layer,0,0);
     if(this.tool==='pen')return;
+    if(this.fallSince!==null){
+      const elapsed=Math.max(0,(time-this.fallSince)/1000);
+      if(elapsed>=1.6){this.falling=[];this.fallingBaked=null;this.fallSince=null;return;}
+      context.save();context.globalAlpha=Math.min(1,(1.6-elapsed)/.5);
+      if(this.fallingBaked)context.drawImage(this.fallingBaked,0,this.layer.height*(.06*elapsed+.85*elapsed*elapsed));
+      this.falling.forEach((f,i)=>{
+        const t=Math.max(0,elapsed-(i%7)*.025),phase=i*2.4;
+        const x=f.x+(Math.sin(phase+t*3)-Math.sin(phase))*f.size*.3;
+        const y=f.y+this.layer.height*(.06*t+.85*t*t);
+        if(y-f.size>this.layer.height)return;
+        context.save();context.translate(x,y);context.rotate(f.angle+Math.sin(phase)*t*1.5);context.drawImage(this.sprites[f.index],-f.size/2,-f.size/2,f.size,f.size);context.restore();
+      });context.restore();return;
+    }
     if(this.paused||this.leftSince!==null||this.fistSince!==null)return;
     hands.filter(hand=>indexExtended(hand,this.layer.width/this.layer.height)).forEach(hand=>this.stamp(this.point(hand,mirror),this.count%FLOWERS.length,false,context));
   }
