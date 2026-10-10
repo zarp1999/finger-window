@@ -104,11 +104,17 @@ html,body,#root{width:100%;height:100%;overflow:hidden}
 .camera-app.compact-app .effect-scope{left:50%;transform:translateX(-50%);top:max(20px,env(safe-area-inset-top));background:#11151d65;border:1px solid #ffffff25;border-radius:18px;font-size:11px;padding:6px 12px}
 .camera-app.compact-app .photo-shot{top:max(76px,calc(env(safe-area-inset-top) + 60px));left:64px;right:64px;background:#11151d70;font-size:13px}
 .camera-app .camera-notice{bottom:210px;left:16px;right:72px;z-index:5}
-.camera-app.compact-app .welcome{left:20px;right:72px;max-width:460px;margin:auto;padding:18px 0}
+.camera-app.compact-app .welcome{left:20px;right:72px;width:auto;max-width:460px;margin:auto;padding:18px 0}
 .camera-app.compact-app .welcome h2{font-size:22px}
 .camera-app.compact-app .welcome .window-icon{display:none}
 .settings-language{display:flex;gap:8px;margin-bottom:20px}
 .settings-language button{min-height:44px;padding:8px 18px;border-radius:22px}
+@media(max-width:760px){
+ .camera-app.compact-app .welcome h2{font-size:17px;line-height:1.4;margin-bottom:10px}
+ .camera-app.compact-app .welcome p{font-size:12px;line-height:1.6;margin-bottom:16px;overflow-wrap:anywhere}
+ .camera-app.compact-app .welcome .primary{font-size:13px;min-width:0;max-width:100%;padding:12px 18px}
+ .camera-app.compact-app .welcome .privacy{font-size:10px;margin:10px 0 0}
+}
 @media(max-height:560px){
  .camera-app .camera-tools{gap:4px;right:max(8px,env(safe-area-inset-right))}
  .camera-app .capture-dock{left:max(132px,calc(env(safe-area-inset-left) + 128px));width:220px;gap:6px;bottom:max(8px,env(safe-area-inset-bottom))}
