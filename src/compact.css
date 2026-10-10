@@ -123,3 +123,8 @@ html,body,#root{width:100%;height:100%;overflow:hidden}
 @media(prefers-reduced-motion:reduce){.camera-app .photo-countdown>span{animation:none}.camera-app .shutter-flash{animation:shutter-flash .18s ease-out forwards;background:#ffffff70}}
 .swatch.none{background:transparent;border:1px solid #7d8796;position:relative}.swatch.none:after{content:"";position:absolute;width:110%;height:1px;background:#7d8796;left:-5%;top:50%;transform:rotate(-45deg)}
 .swatch.retro{background:radial-gradient(ellipse at center,#c8c3b9,#534f4a);border:2px solid #dfd7c8;box-shadow:inset 0 0 5px #171514}
+.sticker-sets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.sticker-sets button{min-height:58px;display:flex;align-items:center;gap:10px;padding:10px 14px;text-align:left;border:1px solid #3d4653;border-radius:10px;background:#202631;color:#e9edf3;font-size:14px}
+.sticker-sets button[aria-pressed=true]{border-color:#c4ff61;background:#243122;color:#c4ff61}
+.sticker-sets span{font-size:28px;line-height:1;width:32px;text-align:center}
+.sticker-sets button[data-sticker=sparkles] span{color:#fff0c6;text-shadow:0 0 8px #ffe29b90}

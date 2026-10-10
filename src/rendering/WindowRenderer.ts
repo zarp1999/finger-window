@@ -16,7 +16,7 @@ export class WindowRenderer {
   private fullScreen=false;
   get flowerCount():number {return this.flowers.count;}
   get flowerPaused():boolean {return this.flowers.paused;}
-  updateFlowers(hands:Hand[],time:number,settings:Settings):void {this.flowers.setEnabled(settings.flowers);this.flowers.update(hands,time,settings.mirror);this.pen.setEnabled(settings.pen);this.pen.color=settings.penColor;this.pen.size=settings.penSize;this.pen.update(hands,time,settings.mirror);}
+  updateFlowers(hands:Hand[],time:number,settings:Settings):void {this.flowers.setPalette(settings.stickerSet);this.flowers.setEnabled(settings.flowers);this.flowers.update(hands,time,settings.mirror);this.pen.setEnabled(settings.pen);this.pen.color=settings.penColor;this.pen.size=settings.penSize;this.pen.update(hands,time,settings.mirror);}
   clearFlowers():void {this.flowers.clear();}
   constructor(private canvas: HTMLCanvasElement) {
     const context = canvas.getContext('2d');

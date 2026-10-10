@@ -1,6 +1,7 @@
-import type { Hand, Landmark, Point } from '../types';
+import type { Hand, Landmark, Point, StickerSet } from '../types';
 
-export const FLOWERS = ['🌸','🌹','🌻','🌷','🌼','🌺'] as const;
+import { createStickerSprites,STICKER_PALETTES } from './StickerSprites';
+export { FLOWERS } from './StickerSprites';
 interface FlowerStamp extends Point {index:number;size:number;angle:number}
 function distance(a:Landmark,b:Landmark,aspect:number):number {
   return Math.hypot((a.x-b.x)*aspect,a.y-b.y,(a.z-b.z)*aspect);
@@ -22,11 +23,10 @@ export class FlowerTrail {
   size=5;
   private layer=document.createElement('canvas');
   private context=this.layer.getContext('2d')!;
-  private sprites=FLOWERS.map(flower=>{
-    const sprite=document.createElement('canvas');sprite.width=96;sprite.height=96;
-    const c=sprite.getContext('2d')!;c.font='76px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
-    c.textAlign='center';c.textBaseline='middle';c.fillText(flower,48,49);return sprite;
-  });
+  private sprites=createStickerSprites();
+  private palette=STICKER_PALETTES.flowers;
+  private sequence=0;
+  setPalette(set:StickerSet):void{if(this.palette!==STICKER_PALETTES[set]){this.palette=STICKER_PALETTES[set];this.sequence=0;this.last.clear();}}
   private last=new Map<string,Point>();
   private fistSince:number|null=null;
   private latched=false;
@@ -53,11 +53,11 @@ export class FlowerTrail {
     this.resetGesture();
   }
   resetGesture():void {this.last.clear();this.fistSince=null;this.latched=false;this.leftSince=null;this.leftReleased=null;this.leftLatched=false;}
-  clear():void {this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.last.clear();this.stamps=[];this.baked=null;this.falling=[];this.fallingBaked=null;this.fallSince=null;}
+  clear():void {this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.sequence=0;this.last.clear();this.stamps=[];this.baked=null;this.falling=[];this.fallingBaked=null;this.fallSince=null;}
   private drop(time:number):void {
     if(this.fallSince!==null||!this.count)return;
     this.falling=this.stamps;this.fallingBaked=this.baked;this.fallSince=time;
-    this.stamps=[];this.baked=null;this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.last.clear();
+    this.stamps=[];this.baked=null;this.context.clearRect(0,0,this.layer.width,this.layer.height);this.count=0;this.sequence=0;this.last.clear();
   }
   setEnabled(enabled:boolean):void {if(enabled!==this.enabled){this.resetGesture();this.paused=false;this.falling=[];this.fallingBaked=null;this.fallSince=null;}this.enabled=enabled;}
   private point(hand:Hand,mirror:boolean):Point {return{x:(mirror?1-hand[8].x:hand[8].x)*this.layer.width,y:hand[8].y*this.layer.height};}
@@ -99,13 +99,13 @@ export class FlowerTrail {
       }
       const spacing=Math.max(22,Math.min(38,this.layer.width*.04));
       if(!last||Math.hypot(point.x-last.x,point.y-last.y)>=spacing){
-        this.stamp(point,this.count%FLOWERS.length,true);this.count++;this.last.set(key,point);
+        this.stamp(point,this.palette[this.sequence%this.palette.length],true);this.sequence++;this.count++;this.last.set(key,point);
       }
     });
     for(const key of this.last.keys())if(!present.has(key))this.last.delete(key);
   }
   private stamp(point:Point,index:number,persistent:boolean,target=this.context):void {
-    const size=Math.max(30,Math.min(64,this.layer.width*.06));
+    const size=Math.max(30,Math.min(64,this.layer.width*.06))*(index>=6&&index<=11?[1,.8,1.15,.7,.95,.85][index-6]:1);
     const angle=persistent?((this.count%7)-3)*.08:0;
     if(persistent){
       // Keep particle metadata bounded; older flowers remain in a raster snapshot.
@@ -134,7 +134,7 @@ export class FlowerTrail {
       });context.restore();return;
     }
     if(this.paused||this.leftSince!==null||this.fistSince!==null)return;
-    hands.filter(hand=>indexExtended(hand,this.layer.width/this.layer.height)).forEach(hand=>this.stamp(this.point(hand,mirror),this.count%FLOWERS.length,false,context));
+    hands.filter(hand=>indexExtended(hand,this.layer.width/this.layer.height)).forEach(hand=>this.stamp(this.point(hand,mirror),this.palette[this.sequence%this.palette.length],false,context));
   }
   dispose():void {this.clear();this.layer.width=0;this.layer.height=0;this.sprites.forEach(sprite=>{sprite.width=0;sprite.height=0;});}
 }

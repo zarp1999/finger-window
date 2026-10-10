@@ -3,10 +3,13 @@ import type { TranslationKey } from '../i18n';
 import type { useRecording } from '../hooks/useRecording';
 import type { usePhoto } from '../hooks/usePhoto';
 
-type IconName='record'|'flower'|'pen'|'effects'|'settings'|'help'|'saved';
+type IconName='record'|'sparkles'|'hearts'|'space'|'flower'|'pen'|'effects'|'settings'|'help'|'saved';
 function Icon({name}:{name:IconName}){
   const paths:Record<IconName,string>={
     record:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M8 8h8v8H8z',
+    sparkles:'M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
+    hearts:'M12 20S3 14 3 8a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 12-9 12z',
+    space:'M18 6a8 8 0 1 1-12 12 8 8 0 0 1 12-12 M3 16c-5 7 9 4 17-4s1-8-4-5',
     flower:'M12 9c-7-9-11 0-5 3-8 5 0 11 5 3 5 8 13 2 5-3 6-3 2-12-5-3 M14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0',
     pen:'M4 20l1-5L16 4l4 4L9 19z M14 6l4 4 M4 20l5-1',
     effects:'M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
@@ -25,7 +28,7 @@ export function QuickControls({settings,state,photo,recording,effectLabel,onSett
   return <section className="camera-controls" aria-label={t('controls')}>
     <div className="camera-tools">
       <button id="openEffects" className="hud-icon" onClick={onEffects} aria-label={t('effect')} title={t('effect')} aria-haspopup="dialog"><Icon name="effects"/></button>
-      <button id="flowerMode" className="hud-icon" aria-pressed={settings.flowers} onClick={onFlowers} aria-label={t('flowerMode')} title={t('flowerMode')}><Icon name="flower"/></button>
+      <button id="flowerMode" className="hud-icon" aria-pressed={settings.flowers} onClick={onFlowers} aria-label={t(settings.stickerSet==='flowers'?'flowerMode':settings.stickerSet)} title={t(settings.stickerSet==='flowers'?'flowerMode':settings.stickerSet)}><Icon name={settings.stickerSet==='flowers'?'flower':settings.stickerSet}/></button>
       <button id="penToggle" className="hud-icon" aria-pressed={settings.pen} onClick={onPen} aria-label={t('penMode')} title={t('penMode')}><Icon name="pen"/></button>
       <button id="openSettings" className="hud-icon" onClick={onOptions} aria-label={t('controls')} title={t('controls')} aria-haspopup="dialog"><Icon name="settings"/></button>
       <button id="openHelp" className="hud-icon" onClick={onHelp} aria-label={t('howTo')} title={t('howTo')} aria-haspopup="dialog"><Icon name="help"/></button>
