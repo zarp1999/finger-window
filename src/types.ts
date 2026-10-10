@@ -1,5 +1,5 @@
 import type { TranslationKey } from './i18n';
-export const EFFECTS = ['thermal','mono','negative','mosaic','rgb','ripple','trail','sprite','mixed','raster','stipple','xerox','blob'] as const;
+export const EFFECTS = ['none','thermal','mono','negative','mosaic','rgb','ripple','trail','sprite','raster','stipple','blob'] as const;
 export type Effect = typeof EFFECTS[number];
 export function isEffect(value: unknown): value is Effect { return EFFECTS.some(effect => effect === value); }
 export interface Point { x: number; y: number }

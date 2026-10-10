@@ -45,10 +45,10 @@ export class WindowRenderer {
   render(video: HTMLVideoElement, hands: Hand[], settings: Settings, strength = 1, media: WindowMedia | null = null): boolean {
     const c = this.context;
     this.clear(); this.draw(video, settings.mirror);
-    const fullScreen=settings.effectScope==='full'&&!settings.flowers&&!settings.pen&&!media;
+    const fullScreen=settings.effect!=='none'&&settings.effectScope==='full'&&!settings.flowers&&!settings.pen&&!media;
     if(fullScreen!==this.fullScreen){this.effect.reset();this.fullScreen=fullScreen;}
     const polygon = hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
-    const visible = !settings.flowers && !settings.pen && (fullScreen || (polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002));
+    const visible = (settings.effect!=='none'||!!media) && !settings.flowers && !settings.pen && (fullScreen || (polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002));
     if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);}
     else if (visible) {
       c.save(); this.path(polygon); c.clip();

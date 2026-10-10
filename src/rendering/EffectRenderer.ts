@@ -1,5 +1,5 @@
 import type { Effect } from '../types';
-const EFFECT_MODES:Record<Exclude<Effect,'blob'>,number> = {thermal:0,mono:1,negative:2,mosaic:3,rgb:5,ripple:7,trail:8,sprite:9,mixed:12,raster:14,stipple:15,xerox:16};
+const EFFECT_MODES:Record<Exclude<Effect,'blob'|'none'>,number> = {thermal:0,mono:1,negative:2,mosaic:3,rgb:5,ripple:7,trail:8,sprite:9,raster:14,stipple:15};
 import { thermalColor } from '../lib/geometry';
 import { vertexShader, fragmentShader } from './shaders';
 import { STYLE_EFFECTS, stylePixel } from './StyleEffects';
@@ -75,6 +75,7 @@ export class EffectRenderer {
     if (this.lastEffect !== effect) { this.reset(); this.lastEffect = effect; }
     strength = Math.max(0,Math.min(1,strength));
     const now = performance.now();
+    if(effect==='none'){this.trailContext.drawImage(video,0,0,this.trail.width,this.trail.height);return this.trail;}
     if(effect==='blob')return this.blobs.render(video,now,mirrorLabels);
     if (effect === 'trail') {
       const delta = Math.min(100,Math.max(1,now-this.lastTime));
