@@ -7,12 +7,14 @@ import { PhotoStrip } from './PhotoStrip';
 import { EffectModeGesture } from '../tracking/EffectModeGesture';
 import { HandTracker } from '../tracking/HandTracker';
 import { WindowRenderer } from '../rendering/WindowRenderer';
+import { drawCameraPreview } from '../rendering/CameraPreview';
 
 /** Frame data stays here; React subscribers receive only changed status values. */
 export class CameraSession {
   private source: CameraSource;
   private tracker = new HandTracker();
   private renderer: WindowRenderer;
+  private sourceFrame=document.createElement('canvas');
   private state = INITIAL_STATE;
   private settings = DEFAULT_SETTINGS;
   private generation = 0;
@@ -31,7 +33,7 @@ export class CameraSession {
   private modeHolding=false;
 
   constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}, private onPhoto:(canvas:HTMLCanvasElement)=>void = ()=>{}, private onScope:(scope:EffectScope)=>void = ()=>{}) {
-    this.source = new CameraSource(video); this.renderer = new WindowRenderer(canvas);
+    this.source = new CameraSource(video); this.renderer = new WindowRenderer(this.sourceFrame);
   }
   setSettings(settings: Settings): void {
     if(settings.photoCount!==this.settings.photoCount||(!settings.autoPhoto&&this.settings.autoPhoto)){this.cancelPhoto();}
@@ -82,6 +84,7 @@ export class CameraSession {
     this.photoStrip.cancel();
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
     this.gestures.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused,penCount:this.renderer.penCount,penPaused:this.renderer.penPaused, message: 'cameraStopped' });
+    this.canvas.getContext('2d')?.clearRect(0,0,this.canvas.width,this.canvas.height);
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
   private render = (time: number): void => {
@@ -116,6 +119,7 @@ export class CameraSession {
           }
         }
         const visible = this.renderer.render(this.video,this.hands,this.settings,.7,this.media);
+        drawCameraPreview(this.sourceFrame,this.canvas,this.canvas.clientWidth||this.sourceFrame.width,this.canvas.clientHeight||this.sourceFrame.height);
         if(!document.hidden&&(takePhoto||this.photoStrip.due(time)))this.takePhoto(time);
         const count = this.hands.length;
         const fullScreen=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers&&!this.settings.pen;

@@ -28,8 +28,8 @@ export function App() {
   useWebMcp({state:camera.state,settings,onEffect:effect=>{content.clear();setSettings(previous=>({...previous,effect,flowers:false,pen:false}));},onStop:camera.stop});
   const sheetTitle=t(sheet==='effects'?'effect':sheet==='help'?'howTo':sheet==='saved'?'savedMedia':'controls');
   const currentEffect=settings.pen?t('penMode')+(camera.state.penPaused?' · '+t('flowersPaused'):''):settings.flowers?t('flowerMode')+(camera.state.flowerPaused?' · '+t('flowersPaused'):''):content.media?content.media.name:t(settings.effect);
-  return <div className={`app compact-app${camera.state.phase==='live'?' live':''}`}>
-    <header><a className="brand" href="./" aria-label={t('home')}><span className="mark">⌑</span> FINGER WINDOW</a><div className="language-switch" role="group" aria-label={t('language')}><button lang="ja" aria-pressed={language==='ja'} onClick={()=>setLanguage('ja')}>日本語</button><button lang="mn" aria-pressed={language==='mn'} onClick={()=>setLanguage('mn')}>Монгол</button></div></header>
+  return <div className={`app compact-app camera-app${camera.state.phase==='live'?' live':''}`}>
+
     <main>
       <section className="camera-area" aria-label={t('workspace')}>
         <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} effectScope={!settings.flowers&&!settings.pen&&!content.media?settings.effectScope:null}/>
@@ -37,13 +37,14 @@ export function App() {
       </section>
       <QuickControls settings={settings} state={camera.state} photo={photo} recording={recording} effectLabel={currentEffect} onSettings={setSettings} onCapture={camera.capturePhoto}
         onEffects={()=>setSheet('effects')} onOptions={()=>setSheet('options')} onHelp={()=>setSheet('help')} onSaved={()=>setSheet('saved')}
-        onFlowers={()=>{content.clear();setSettings(previous=>({...previous,flowers:!previous.flowers,pen:false}));}} t={t}/>
+        onPen={()=>{content.clear();setSettings(previous=>({...previous,pen:!previous.pen,flowers:false}));}} onFlowers={()=>{content.clear();setSettings(previous=>({...previous,flowers:!previous.flowers,pen:false}));}} t={t}/>
     </main>
     <BottomSheet open={sheet!==null} title={sheetTitle} closeLabel={t('close')} onClose={()=>setSheet(null)}>
       {sheet==='effects'&&<div className="effects" role="group" aria-label={t('effectGroup')}>{EFFECTS.map(effect=>
         <button key={effect} className={`effect${settings.effect===effect&&!settings.flowers&&!settings.pen&&!content.media?' active':''}`} data-effect={effect} aria-pressed={settings.effect===effect&&!settings.flowers&&!settings.pen&&!content.media} onClick={()=>{content.clear();setSettings(previous=>({...previous,effect,flowers:false,pen:false}));setSheet(null);}}><span className={`swatch ${effect}`}/>{t(effect)}</button>
       )}</div>}
       {sheet==='options'&&<>
+        <div className="language-switch settings-language" role="group" aria-label={t('language')}><button lang="ja" aria-pressed={language==='ja'} onClick={()=>setLanguage('ja')}>日本語</button><button lang="mn" aria-pressed={language==='mn'} onClick={()=>setLanguage('mn')}>Монгол</button></div>
         <section className="sheet-section">
           <label className="toggle">{t('mirror')}<input id="mirror" type="checkbox" checked={settings.mirror} onChange={event=>setSettings(previous=>({...previous,mirror:event.target.checked}))}/><span className="switch"/></label>
           <label className="toggle">{t('photoAutomatic')}<input id="autoPhoto" type="checkbox" checked={settings.autoPhoto} onChange={event=>setSettings(previous=>({...previous,autoPhoto:event.target.checked}))}/><span className="switch"/></label>

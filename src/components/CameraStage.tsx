@@ -20,7 +20,7 @@ export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, ef
     {live&&state.photoShot!==null&&<div id="photoShot" className="photo-shot" role="status" aria-live="polite">{t('photoBoothProgress')} {state.photoShot} / 3 · {t('photoPose')}</div>}
     <div className="stage-top"><span id="modeLabel">{t(live ? 'live' : 'standby')}</span><span id="fps">{state.fps || '—'} FPS</span></div>
     {live&&effectScope&&<div id="effectScope" className="effect-scope" role="status" aria-live="polite">{t(effectScope==='full'?'fullMode':'windowMode')}</div>}
-    {(live||loading)&&<button id="stop" className="camera-stop" onClick={onStop}>{t('stop')}</button>}
+    {(live||loading)&&<button id="stop" className="camera-stop" onClick={onStop} aria-label={t('stop')} title={t('stop')}><span aria-hidden="true">×</span></button>}
     <div id="welcome" className="welcome" hidden={live}>
       <span className="window-icon" aria-hidden="true" /><h2>{t('welcome')}</h2>
       <p>{t('instruction1')}<br />{t('instruction2')}</p>
