@@ -1,7 +1,7 @@
 import type { StickerSet } from '../types';
 
 export const FLOWERS=['🌸','🌹','🌻','🌷','🌼','🌺'] as const;
-const HEARTS=['❤️','🩷','🧡','💛','💚','💙','💜'];
+const HEARTS=['#ed405b','#f27daf','#f48838','#edc943','#50bb82','#5599ed','#a077de'];
 const SPACE=['🌙','🪐','🌍','🚀','👽','☄️'];
 export const STICKER_PALETTES:Record<StickerSet,number[]>={
   flowers:[0,1,2,3,4,5],sparkles:[6,7,8,9,10,11],hearts:[12,13,14,15,16,17,18],space:[19,20,21,22,23,24],
@@ -24,6 +24,21 @@ function sparkle(color:string,index:number):HTMLCanvasElement{
   if(index%3===0){ctx.fillStyle='#ffffffdd';ctx.beginPath();ctx.arc(27,25,2,0,Math.PI*2);ctx.fill();}
   return c;
 }
+function heart(color:string):HTMLCanvasElement{
+  const c=sprite(),ctx=c.getContext('2d')!;
+  ctx.beginPath();ctx.moveTo(64,111);
+  ctx.bezierCurveTo(56,103,15,76,15,47);
+  ctx.bezierCurveTo(15,15,49,10,64,35);
+  ctx.bezierCurveTo(79,10,113,15,113,47);
+  ctx.bezierCurveTo(113,76,72,103,64,111);ctx.closePath();
+  const fill=ctx.createLinearGradient(28,20,91,111);
+  fill.addColorStop(0,'#ffe9f0');fill.addColorStop(.3,color);fill.addColorStop(1,color);
+  ctx.fillStyle=fill;ctx.shadowColor=color+'65';ctx.shadowBlur=7;ctx.shadowOffsetY=3;ctx.fill();
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.beginPath();ctx.moveTo(28,48);ctx.bezierCurveTo(28,30,43,25,51,34);
+  ctx.strokeStyle='#ffffff99';ctx.lineWidth=5;ctx.lineCap='round';ctx.stroke();
+  return c;
+}
 export function createStickerSprites():HTMLCanvasElement[]{
-  return [...FLOWERS.map(emoji),...['#ffffff','#ffe5a3','#dcefff','#ffe4ef','#eadfff','#fff1cf'].map(sparkle),...HEARTS.map(emoji),...SPACE.map(emoji)];
+  return [...FLOWERS.map(emoji),...['#ffffff','#ffe5a3','#dcefff','#ffe4ef','#eadfff','#fff1cf'].map(sparkle),...HEARTS.map(heart),...SPACE.map(emoji)];
 }
