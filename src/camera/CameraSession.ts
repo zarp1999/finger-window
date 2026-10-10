@@ -5,7 +5,6 @@ import { GestureController } from '../tracking/GestureController';
 import { PhotoGesture, photoPose } from '../tracking/PhotoGesture';
 import { PhotoStrip } from './PhotoStrip';
 import { EffectModeGesture } from '../tracking/EffectModeGesture';
-import { EffectSwipeGesture } from '../tracking/EffectSwipeGesture';
 import { HandTracker } from '../tracking/HandTracker';
 import { WindowRenderer } from '../rendering/WindowRenderer';
 import { drawCameraPreview } from '../rendering/CameraPreview';
@@ -31,14 +30,13 @@ export class CameraSession {
   private photoGesture = new PhotoGesture();
   private photoStrip = new PhotoStrip();
   private modeGesture = new EffectModeGesture();
-  private swipeGesture=new EffectSwipeGesture();
   private modeHolding=false;
 
   constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}, private onPhoto:(canvas:HTMLCanvasElement)=>void = ()=>{}, private onScope:(scope:EffectScope)=>void = ()=>{}) {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(this.sourceFrame);
   }
   setSettings(settings: Settings): void {
-    if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror||settings.flowers||settings.pen)this.swipeGesture.reset();
+    if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror||settings.flowers||settings.pen)this.gestures.reset();
     if(settings.photoCount!==this.settings.photoCount||(!settings.autoPhoto&&this.settings.autoPhoto)){this.cancelPhoto();}
     if(settings.autoPhoto!==this.settings.autoPhoto){this.photoGesture.reset();this.publish({photoCountdown:null,photoLocked:false});}
     this.settings = settings;
@@ -60,7 +58,7 @@ export class CameraSession {
   }
   clearPen():void {this.renderer.clearPen();this.publish({penCount:0});}
   clearFlowers():void {this.renderer.clearFlowers();this.publish({flowerCount:0});}
-  setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset();this.swipeGesture.reset();this.modeGesture.reset();this.modeHolding=false; }
+  setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset();this.modeGesture.reset();this.modeHolding=false; }
   private publish(patch: Partial<CameraState>): void {
     if (this.disposed) return;
     const next = { ...this.state, ...patch };
@@ -87,7 +85,7 @@ export class CameraSession {
   stop(): void {
     this.photoStrip.cancel();
     this.generation++; cancelAnimationFrame(this.frameId); this.source.stop(); this.tracker.reset(); this.hands = [];
-    this.gestures.reset();this.swipeGesture.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused,penCount:this.renderer.penCount,penPaused:this.renderer.penPaused, message: 'cameraStopped' });
+    this.gestures.reset(); this.photoGesture.reset();this.modeGesture.reset();this.modeHolding=false; this.renderer.reset(); this.publish({ ...INITIAL_STATE, flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused,penCount:this.renderer.penCount,penPaused:this.renderer.penPaused, message: 'cameraStopped' });
     this.canvas.getContext('2d')?.clearRect(0,0,this.canvas.width,this.canvas.height);
   }
   private fail(message: CameraState['message']): void { this.stop(); this.publish({ phase: 'error', message }); }
@@ -107,14 +105,12 @@ export class CameraSession {
               this.settings={...this.settings,effectScope};this.onScope(effectScope);
             }
           }else{this.modeGesture.reset();this.modeHolding=false;}
-          const gesture = this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
-          const swipeEnabled=this.settings.effectScope==='full'&&!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
-          const step=swipeEnabled?this.swipeGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight,this.settings.mirror,(this.canvas.clientWidth||1)/(this.canvas.clientHeight||1)):0;
-          if(!swipeEnabled)this.swipeGesture.reset();
-          const pinchEnabled=this.settings.effectScope==='window';
-          if ((step||pinchEnabled&&gesture.next) && !this.media && !this.settings.flowers&&!this.settings.pen && !this.modeHolding && !document.hidden && !photoPose(this.hands,this.video.videoWidth/this.video.videoHeight) && this.state.photoCountdown===null) {
-            const effect = EFFECTS[(EFFECTS.indexOf(this.settings.effect)+(step||1)+EFFECTS.length)%EFFECTS.length];
-            this.settings = { ...this.settings, effect }; this.onEffect(effect);
+          const pinchEnabled=!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
+          const gesture=pinchEnabled?this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight):{next:false};
+          if(!pinchEnabled)this.gestures.reset();
+          if(gesture.next){
+            const effect=EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
+            this.settings={...this.settings,effect};this.onEffect(effect);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
           this.publish({ flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused,penCount:this.renderer.penCount,penPaused:this.renderer.penPaused });

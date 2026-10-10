@@ -10,7 +10,7 @@ export class GestureController {
   }
   update(hands: Hand[], time: number, aspect: number): { next: boolean } {
     const distance = (a: Hand[number], b: Hand[number]) => Math.hypot((a.x-b.x)*aspect,a.y-b.y);
-    if (hands.length !== 2) {
+    if (hands.length === 0) {
       this.armed = false; this.pinchSince = null; this.releaseSince = null;
       return { next: false };
     }
