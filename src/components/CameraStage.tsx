@@ -34,7 +34,7 @@ export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, ef
       <p>{t('instruction1')}<br />{t('instruction2')}</p>
       {state.phase==='error'&&<p className="status error" role="alert">{t(state.message)}</p>}
       <button id="start" className="primary" onClick={onStart} disabled={loading}>{t(loading ? 'loading' : state.phase === 'error' ? 'retry' : 'start')}</button>
-      <p className="privacy">{t('privacy')}</p>
+      {t('privacy')&&<p className="privacy">{t('privacy')}</p>}
     </div>
     {live&&<div className="stage-bottom"><span id="hint">{t(state.hint)}</span><span className="corner">{t('liveWindow')}</span></div>}
   </div>;

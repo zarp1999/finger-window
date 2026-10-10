@@ -61,7 +61,7 @@ export function App() {
         <section className="sheet-section"><h3>{t('penMode')}</h3><p>{t('penHelp')}</p></section>
         <section className="sheet-section"><h3>{t('stickers')}</h3><p>{t('stickerHelp')}</p></section>
         <section className="sheet-section"><p>{t('recordHelp')}</p>{!recording.supported&&<p>{t('recordUnsupported')}</p>}</section>
-        <section className="sheet-section"><h3>{t('tipLabel')}</h3><p>{t('tip')}</p><p>{t('privacy')}</p></section>
+        <section className="sheet-section"><h3>{t('tipLabel')}</h3><p>{t('tip')}</p>{t('privacy')&&<p>{t('privacy')}</p>}</section>
       </>}
       {sheet==='saved'&&<>
         {!photo.result&&!recording.state.url&&!photo.busy&&!photo.error&&<p className="empty-saved">{t('noSavedMedia')}</p>}
