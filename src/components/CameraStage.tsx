@@ -11,8 +11,9 @@ interface Props {
   onStop: () => void;
   t: (key: TranslationKey) => string;
   effectScope:EffectScope|null;
+  onToggleScope:()=>void;
 }
-export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, effectScope }: Props) {
+export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, effectScope, onToggleScope }: Props) {
   const live = state.phase === 'live', loading = state.phase === 'loading';
   const [flash,setFlash]=useState(false);
   useEffect(()=>{
@@ -24,10 +25,9 @@ export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, ef
     <video ref={videoRef} id="video" autoPlay muted playsInline aria-hidden="true" />
     <canvas ref={canvasRef} id="output" width="960" height="540" aria-label={t('output')} />
     {flash&&<div key={state.photoFlash} id="shutterFlash" className="shutter-flash" aria-hidden="true"/>}
-    {live&&state.photoCountdown!==null&&<div id="photoCountdown" className="photo-countdown" role="status" aria-live="assertive" aria-atomic="true"><span key={state.photoCountdown}>{state.photoCountdown}</span><small>{t('photoHold')}</small></div>}
-    {live&&state.photoShot!==null&&<div id="photoShot" className="photo-shot" role="status" aria-live="polite">{t('photoBoothProgress')} {state.photoShot} / 3 · {t('photoPose')}</div>}
+    {live&&state.photoCountdown!==null&&<div id="photoCountdown" className="photo-countdown" role="status" aria-live="assertive" aria-atomic="true"><span key={state.photoCountdown}>{state.photoCountdown}</span></div>}
     <div className="stage-top"><span id="modeLabel">{t(live ? 'live' : 'standby')}</span><span id="fps">{state.fps || '—'} FPS</span></div>
-    {live&&effectScope&&<div id="effectScope" className="effect-scope" role="status" aria-live="polite">{t(effectScope==='full'?'fullMode':'windowMode')}</div>}
+    {live&&effectScope&&<button type="button" id="effectScope" className="effect-scope" onClick={onToggleScope} aria-pressed={effectScope==='full'}>{t(effectScope==='full'?'fullMode':'windowMode')}</button>}
     {(live||loading)&&<button id="stop" className="camera-stop" onClick={onStop} aria-label={t('stop')} title={t('stop')}><span aria-hidden="true">×</span></button>}
     <div id="welcome" className="welcome" hidden={live}>
       <span className="window-icon" aria-hidden="true" /><h2>{t('welcome')}</h2>

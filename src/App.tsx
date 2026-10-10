@@ -32,7 +32,7 @@ export function App() {
 
     <main>
       <section className="camera-area" aria-label={t('workspace')}>
-        <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} effectScope={!content.media&&(!settings.flowers&&!settings.pen||settings.effectScope==='full')?settings.effectScope:null}/>
+        <CameraStage videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} onToggleScope={()=>setSettings(previous=>({...previous,effectScope:previous.effectScope==='full'?'window':'full'}))} effectScope={!content.media&&(!settings.flowers&&!settings.pen||settings.effectScope==='full')?settings.effectScope:null}/>
         {(photo.busy||recording.state.phase==='stopping'||recording.state.message)&&<div className="camera-notice" role="status">{t(photo.busy?'photoPreparing':recording.state.phase==='stopping'?'recordFinishing':recording.state.message!)}</div>}
       </section>
       <QuickControls settings={settings} state={camera.state} photo={photo} recording={recording} effectLabel={(settings.flowers||settings.pen)&&settings.effectScope==='full'?t(settings.effect)+' · '+currentEffect:currentEffect} onSettings={setSettings} onCapture={camera.capturePhoto}
