@@ -57,7 +57,7 @@ export function App() {
       </>}
       {sheet==='help'&&<>
         <section className="sheet-section"><p>{t('photoHelp')}</p><p>{t('photoRelease')}</p><p>{t('photoBoothHelp')}</p></section>
-        <section className="sheet-section"><h3>{t('effect')}</h3><p>{t('gestureHelp')}</p><p>{t('modeGestureHelp')}</p></section>
+        <section className="sheet-section"><h3>{t('effect')}</h3><p>{t('gestureHelp')}</p><p>{t('modeGestureHelp')}</p><p>{t('windowLockHelp')}</p></section>
         <section className="sheet-section"><h3>{t('penMode')}</h3><p>{t('penHelp')}</p></section>
         <section className="sheet-section"><h3>{t('stickers')}</h3><p>{t('stickerHelp')}</p></section>
         <section className="sheet-section"><p>{t('recordHelp')}</p>{!recording.supported&&<p>{t('recordUnsupported')}</p>}</section>

@@ -3,9 +3,13 @@ import { drawMediaWarp } from './MediaWarp';
 import { convexHull, polygonArea } from '../lib/geometry';
 import { EffectRenderer } from './EffectRenderer';
 import { FlowerTrail } from './FlowerTrail';
+import { WindowLockGesture } from '../tracking/WindowLockGesture';
 
 
 export class WindowRenderer {
+  private windowLock=new WindowLockGesture();
+  updateWindow(hands:Hand[],time:number,aspect:number,enabled:boolean):void{this.windowLock.update(hands,time,aspect,enabled);}
+  resetWindow():void{this.windowLock.reset();}
   private context: CanvasRenderingContext2D;
   private effect = new EffectRenderer();
   private flowers = new FlowerTrail();
@@ -47,16 +51,25 @@ export class WindowRenderer {
     this.clear(); this.draw(video, settings.mirror);
     const fullScreen=settings.effect!=='none'&&settings.effectScope==='full'&&!media;
     if(fullScreen!==this.fullScreen){this.effect.reset();this.fullScreen=fullScreen;}
-    const polygon = hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
-    const visible = fullScreen || ((settings.effect!=='none'||!!media) && !settings.flowers && !settings.pen && polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002);
+    const fixed=settings.effectScope==='window'?this.windowLock.polygon:null;
+    const polygon = fixed?convexHull(fixed.map(p=>this.point(p,settings.mirror))):hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
+    const visible = fullScreen || ((settings.effect!=='none'||!!media) && (!!fixed||!settings.flowers && !settings.pen) && polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002);
     if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);}
     else if (visible) {
       c.save(); this.path(polygon); c.clip();
       if (media) { this.effect.reset(); drawMediaWarp(c,media,polygon); }
       else this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);
       c.restore();
-      this.path(polygon); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke();
-      polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle='#fff';c.fill(); });
+      this.path(polygon); c.strokeStyle = fixed?'#ff4356':'#fff'; c.lineWidth = fixed?3:2; c.stroke();
+      const progress=this.windowLock.progress;
+      if(progress>0){
+        const lengths=polygon.map((p,i)=>Math.hypot(p.x-polygon[(i+1)%polygon.length].x,p.y-polygon[(i+1)%polygon.length].y));
+        let remaining=lengths.reduce((a,b)=>a+b,0)*progress;
+        c.beginPath();c.moveTo(polygon[0].x,polygon[0].y);
+        for(let i=0;i<polygon.length&&remaining>0;i++){const p=polygon[i],q=polygon[(i+1)%polygon.length],fraction=Math.min(1,remaining/lengths[i]);c.lineTo(p.x+(q.x-p.x)*fraction,p.y+(q.y-p.y)*fraction);remaining-=lengths[i];}
+        c.strokeStyle=fixed?'#fff':'#ff4356';c.lineWidth=4;c.stroke();
+      }
+      polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle=fixed?'#ff4356':'#fff';c.fill(); });
     } else this.effect.reset();
     this.flowers.setEnabled(settings.flowers);this.flowers.draw(c,hands,settings.mirror);
     this.pen.setEnabled(settings.pen);this.pen.draw(c,hands,settings.mirror);
@@ -64,6 +77,6 @@ export class WindowRenderer {
     return visible;
   }
   clear(): void { this.context.clearRect(0,0,this.canvas.width,this.canvas.height); }
-  reset(): void { this.clear(); this.effect.reset(); this.flowers.resetGesture();this.pen.resetGesture(); }
+  reset(): void { this.clear(); this.resetWindow();this.effect.reset(); this.flowers.resetGesture();this.pen.resetGesture(); }
   dispose(): void { this.clear(); this.effect.dispose();this.flowers.dispose();this.pen.dispose(); }
 }

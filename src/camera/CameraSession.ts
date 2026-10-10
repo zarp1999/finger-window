@@ -36,6 +36,7 @@ export class CameraSession {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(this.sourceFrame);
   }
   setSettings(settings: Settings): void {
+    if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror)this.renderer.resetWindow();
     if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror||settings.flowers||settings.pen)this.gestures.reset();
     if(settings.photoCount!==this.settings.photoCount||(!settings.autoPhoto&&this.settings.autoPhoto)){this.cancelPhoto();}
     if(settings.autoPhoto!==this.settings.autoPhoto){this.photoGesture.reset();this.publish({photoCountdown:null,photoLocked:false});}
@@ -58,7 +59,7 @@ export class CameraSession {
   }
   clearPen():void {this.renderer.clearPen();this.publish({penCount:0});}
   clearFlowers():void {this.renderer.clearFlowers();this.publish({flowerCount:0});}
-  setMedia(media: WindowMedia | null): void { this.media = media; this.gestures.reset();this.modeGesture.reset();this.modeHolding=false; }
+  setMedia(media: WindowMedia | null): void { this.media = media; this.renderer.resetWindow();this.gestures.reset();this.modeGesture.reset();this.modeHolding=false; }
   private publish(patch: Partial<CameraState>): void {
     if (this.disposed) return;
     const next = { ...this.state, ...patch };
@@ -105,6 +106,7 @@ export class CameraSession {
               this.settings={...this.settings,effectScope};this.onScope(effectScope);
             }
           }else{this.modeGesture.reset();this.modeHolding=false;}
+          this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,this.settings.effectScope==='window'&&(this.settings.effect!=='none'||!!this.media)&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
           const pinchEnabled=!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
           const gesture=pinchEnabled?this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight):{next:false};
           if(!pinchEnabled)this.gestures.reset();
