@@ -53,6 +53,17 @@ npm run preview
 
 ## 公開設定
 
+**GitHub Pages:** https://zarp1999.github.io/finger-window/
+
+`main`へpushすると`.github/workflows/deploy-pages.yml`が`npm run build`の`dist/`を公開します。初回はGitHubのリポジトリ **Settings → Pages → Build and deployment → Source** を **GitHub Actions** にしてください。本番ビルドでは Vite の `base` が `/finger-window/` になります。ローカルで本番同等を確認する場合:
+
+```sh
+npm run build
+npm run preview
+```
+
+ブラウザは `http://127.0.0.1:4173/finger-window/` を開いてください。
+
 `.openai/hosting.json`に既存Sitesの識別子と`dist`の静的配信設定を保存しています。
 Sitesの公開処理では`npm run build`の出力を配信します。
 
