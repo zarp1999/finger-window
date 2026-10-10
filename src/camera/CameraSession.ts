@@ -32,7 +32,7 @@ export class CameraSession {
   private modeGesture = new EffectModeGesture();
   private modeHolding=false;
 
-  constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}, private onPhoto:(canvas:HTMLCanvasElement)=>void = ()=>{}, private onScope:(scope:EffectScope)=>void = ()=>{}) {
+  constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}, private onPhoto:(canvas:HTMLCanvasElement)=>void = ()=>{}, _onScope:(scope:EffectScope)=>void = ()=>{}) {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(this.sourceFrame);
   }
   setSettings(settings: Settings): void {
@@ -98,14 +98,6 @@ export class CameraSession {
         if (this.video.currentTime !== this.lastVideo && time-this.lastDetection >= 33) {
           this.lastVideo = this.video.currentTime; this.lastDetection = time;
           this.hands = this.tracker.detect(this.video, time);
-          if(!this.media&&!this.settings.flowers&&!this.settings.pen&&!document.hidden){
-            const mode=this.modeGesture.update(this.hands,time,this.video.videoWidth/this.video.videoHeight);
-            this.modeHolding=mode.active;
-            if(mode.toggle){
-              const effectScope:EffectScope=this.settings.effectScope==='full'?'window':'full';
-              this.settings={...this.settings,effectScope};this.onScope(effectScope);
-            }
-          }else{this.modeGesture.reset();this.modeHolding=false;}
           this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,this.settings.effectScope==='window'&&(this.settings.effect!=='none'||!!this.media)&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
           const pinchEnabled=!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
           const gesture=pinchEnabled?this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight):{next:false};
