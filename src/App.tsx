@@ -55,11 +55,11 @@ export function App() {
         {(settings.flowers||camera.state.flowerCount>0)&&<section className="sheet-section"><p className="control-label">{t('flowerMode')}</p><div className="status-row"><span>{t('flowerCount')}</span><strong id="flowerCount">{camera.state.flowerCount}</strong></div><button id="clearFlowers" className="secondary" disabled={!camera.state.flowerCount} onClick={camera.clearFlowers}>{t('clearFlowers')}</button></section>}
       </>}
       {sheet==='help'&&<>
-        <section className="sheet-section"><h3>{t('photoTitle')}</h3><p>{t('photoHelp')}</p><p>{t('photoRelease')}</p><p>{t('photoBoothHelp')}</p></section>
+        <section className="sheet-section"><p>{t('photoHelp')}</p><p>{t('photoRelease')}</p><p>{t('photoBoothHelp')}</p></section>
         <section className="sheet-section"><h3>{t('effect')}</h3><p>{t('gestureHelp')}</p><p>{t('modeGestureHelp')}</p></section>
         <section className="sheet-section"><h3>{t('penMode')}</h3><p>{t('penHelp')}</p></section>
         <section className="sheet-section"><h3>{t('flowerMode')}</h3><p>{t('flowerHelp')}</p><div className="flower-palette">🌸 🌹 🌻 🌷 🌼 🌺</div></section>
-        <section className="sheet-section"><h3>{t('recordTitle')}</h3><p>{t('recordHelp')}</p>{!recording.supported&&<p>{t('recordUnsupported')}</p>}</section>
+        <section className="sheet-section"><p>{t('recordHelp')}</p>{!recording.supported&&<p>{t('recordUnsupported')}</p>}</section>
         <section className="sheet-section"><h3>{t('tipLabel')}</h3><p>{t('tip')}</p><p>{t('privacy')}</p></section>
       </>}
       {sheet==='saved'&&<>

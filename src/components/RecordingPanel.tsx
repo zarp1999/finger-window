@@ -5,7 +5,7 @@ export function RecordingPanel({recording,live,t,resultOnly=false}:{recording:Re
   const {state}=recording,busy=state.phase==='recording'||state.phase==='stopping';
   const elapsed=`${Math.floor(state.seconds/60).toString().padStart(2,'0')}:${(state.seconds%60).toString().padStart(2,'0')}`;
   return <section className="record-control">
-    <p className="control-label">{t('recordTitle')}</p>
+
     {!resultOnly&&<p className="note">{t('recordHelp')}</p>}
     {!recording.supported?<p className="status error">{t('recordUnsupported')}</p>:<>
       {!resultOnly&&<div className="media-actions"><button id="recordStart" className="secondary" disabled={!live||busy||recording.sharing} onClick={recording.start}>{t('recordStart')}</button>
@@ -16,7 +16,7 @@ export function RecordingPanel({recording,live,t,resultOnly=false}:{recording:Re
         <p className="note">{state.file.name.endsWith('.mp4')?'MP4':'WebM'} · {(state.file.size/1024/1024).toFixed(1)} MB</p>
         <div className="media-actions"><a id="recordDownload" className="secondary" href={state.url} download={state.file.name}>{t('recordDownload')}</a>
         {recording.canShare&&<button id="recordShare" className="secondary" disabled={recording.sharing} onClick={()=>void recording.share()}>{t('recordShare')}</button>}</div>
-        <p className="note">{t('recordSaveHelp')}</p>
+
       </div>}
     </>}
     {state.message&&<p className="status" role="status">{t(state.message)}</p>}

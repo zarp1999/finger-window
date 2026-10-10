@@ -4,7 +4,7 @@ import type { usePhoto } from '../hooks/usePhoto';
 
 export function PhotoPanel({photo,state,settings,onSettings,onCapture,t,resultOnly=false}:{photo:ReturnType<typeof usePhoto>;state:CameraState;settings:Settings;onSettings:(settings:Settings)=>void;onCapture:()=>void;t:(key:TranslationKey)=>string;resultOnly?:boolean}) {
   return <section className="photo-control">
-    <p className="control-label">{t('photoTitle')}</p>
+
     {!resultOnly&&<>
     <div className="photo-modes" role="group" aria-label={t('photoMode')}>
       {([1,3] as const).map(count=><button key={count} id={count===1?'photoSingle':'photoBooth'} className={settings.photoCount===count?'selected':''} aria-pressed={settings.photoCount===count} disabled={photo.busy||state.photoShot!==null||state.photoCountdown!==null} onClick={()=>onSettings({...settings,photoCount:count})}>{t(count===1?'photoSingle':'photoBooth')}</button>)}
