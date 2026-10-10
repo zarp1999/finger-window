@@ -1,8 +1,12 @@
+import {useState} from 'react';
+import {PhotoEditor} from './PhotoEditor';
 import type { TranslationKey } from '../i18n';
 import type { CameraState,Settings } from '../types';
 import type { usePhoto } from '../hooks/usePhoto';
 
 export function PhotoPanel({photo,state,settings,onSettings,onCapture,t,resultOnly=false}:{photo:ReturnType<typeof usePhoto>;state:CameraState;settings:Settings;onSettings:(settings:Settings)=>void;onCapture:()=>void;t:(key:TranslationKey)=>string;resultOnly?:boolean}) {
+  const [editing,setEditing]=useState(false);
+  if(editing&&photo.result)return <PhotoEditor key={photo.result.url} url={photo.result.url} t={t} busy={photo.busy} onCancel={()=>setEditing(false)} onSave={canvas=>{photo.capture(canvas);setEditing(false);}}/>;
   return <section className="photo-control">
 
     {!resultOnly&&<>
@@ -19,7 +23,7 @@ export function PhotoPanel({photo,state,settings,onSettings,onCapture,t,resultOn
     </>}
     {photo.busy&&<p className="note" role="status">{t('photoPreparing')}</p>}
     {photo.result&&<div className="photo-result"><img id="photoPreview" className="photo-preview" src={photo.result.url} alt={t('photoPreview')}/>
-      <p className="note" role="status">{t('photoReady')}</p>
+      <p className="note" role="status">{t('photoReady')}</p><button id="photoEdit" className="secondary" disabled={photo.busy||photo.sharing} onClick={()=>setEditing(true)}>{t('editPhoto')}</button>
       <div className="media-actions"><a id="photoDownload" className="secondary" href={photo.result.url} download={photo.result.file.name}>{t('photoDownload')}</a>
       {photo.canShare&&<button id="photoShare" className="secondary" disabled={photo.sharing||photo.busy} onClick={()=>void photo.share()}>{t('recordShare')}</button>}</div>
       <p className="note">{t('photoSaveHelp')}</p></div>}
