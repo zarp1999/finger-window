@@ -49,6 +49,7 @@ export class CameraSession {
     else this.takePhoto(performance.now());
   }
   private takePhoto(time:number):void {
+    this.publish({photoFlash:time});
     if(this.settings.photoCount===1){this.onPhoto(this.canvas);return;}
     const strip=this.photoStrip.capture(this.canvas,time);
     this.publish({photoShot:strip?null:this.photoStrip.count,photoCountdown:strip?null:3});

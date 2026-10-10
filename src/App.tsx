@@ -21,7 +21,7 @@ export function App() {
   const content=useWindowMedia(camera.state.phase==='live');
   const recording=useRecording(camera.canvasRef,camera.state.phase==='live',content.media);
   useEffect(()=>{camera.setMedia(content.media);if(content.media)setSettings(previous=>({...previous,flowers:false,pen:false}));},[camera.setMedia,content.media]);
-  useEffect(()=>{if(photo.result)setSheet('saved');},[photo.result]);
+  useEffect(()=>{if(!photo.result)return;const timeout=setTimeout(()=>setSheet('saved'),260);return()=>clearTimeout(timeout);},[photo.result]);
   useEffect(()=>{if(recording.state.url)setSheet('saved');},[recording.state.url]);
   useEffect(()=>{if(photo.error)setSheet('saved');},[photo.error]);
   const {language,setLanguage,t}=useLanguage();
