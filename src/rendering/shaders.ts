@@ -24,6 +24,14 @@ if(right&&mod(floor(uv.x*resolution.x),5.)<1.&&mod(floor(uv.y*resolution.y),5.)<
 }
 else if(mode==14){float scan=.73+.27*cos(uv.y*resolution.y*1.5707963);float mask=mod(floor(uv.x*resolution.x),3.);result=c*scan*vec3(mask<1.?1.:.87,mask>=1.&&mask<2.?1.:.87,mask>=2.?1.:.87);}
 else if(mode==15){result=noise(floor(uv*resolution))<1.-l?vec3(.11,.15,.31):vec3(1.,.78,.56);}
+else if(mode==17){
+vec2 d=1.5/resolution;
+float soft=l*.6+(light(uv+vec2(d.x,0.))+light(uv-vec2(d.x,0.))+light(uv+vec2(0.,d.y))+light(uv-vec2(0.,d.y)))*.1;
+float tone=.09+.83*smoothstep(.035,.97,soft);
+float vignette=1.-.24*smoothstep(.18,.70,length(uv-.5));
+float grain=(noise(floor(uv*resolution*.65))-.5)*.05;
+result=clamp(vec3(tone*vignette+grain)*vec3(1.,.985,.96),0.,1.);
+}
 else if(mode==16){
 float n=noise(floor(uv*resolution));float value=clamp((l-.5)*2.5+.55+(n-.5)*.22,0.,1.);
 float offset=mod(floor(uv.y*7.),3.)<1.?6./resolution.x:0.;float q=light(uv+vec2(offset,0.));

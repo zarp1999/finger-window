@@ -1,5 +1,5 @@
 import type { Effect } from '../types';
-const EFFECT_MODES:Record<Exclude<Effect,'blob'|'none'>,number> = {thermal:0,mono:1,negative:2,mosaic:3,rgb:5,ripple:7,trail:8,sprite:9,raster:14,stipple:15};
+const EFFECT_MODES:Record<Exclude<Effect,'blob'|'none'>,number> = {retro:17,thermal:0,mono:1,negative:2,mosaic:3,rgb:5,ripple:7,trail:8,sprite:9,raster:14,stipple:15};
 import { thermalColor } from '../lib/geometry';
 import { vertexShader, fragmentShader } from './shaders';
 import { STYLE_EFFECTS, stylePixel } from './StyleEffects';
