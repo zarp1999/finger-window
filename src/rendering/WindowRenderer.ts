@@ -12,6 +12,18 @@ export class WindowRenderer {
   resetWindow():void{this.windowLock.reset();}
   private context: CanvasRenderingContext2D;
   private effect = new EffectRenderer();
+  private windowEffect=new EffectRenderer();
+  private flash:{target:'window'|'full';time:number}|null=null;
+  flashTarget(target:'window'|'full',time:number):void{this.flash={target,time};}
+  insideWindow(point:Point):boolean{
+    const polygon=this.windowLock.polygon;if(!polygon)return false;
+    let inside=false;
+    for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+      const a=polygon[i],b=polygon[j];
+      if((a.y>point.y)!==(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+    }
+    return inside;
+  }
   private flowers = new FlowerTrail();
   private pen = new FlowerTrail('pen');
   get penCount():number{return this.pen.count;}
@@ -31,6 +43,7 @@ export class WindowRenderer {
     this.canvas.width = Math.min(video.videoWidth, 1280);
     this.canvas.height = Math.round(this.canvas.width*video.videoHeight/video.videoWidth);
     this.effect.resize(this.canvas.width, this.canvas.height);
+    this.windowEffect.resize(this.canvas.width,this.canvas.height);
     this.flowers.resize(this.canvas.width,this.canvas.height);
     this.pen.resize(this.canvas.width,this.canvas.height);
   }
@@ -53,15 +66,17 @@ export class WindowRenderer {
     if(fullScreen!==this.fullScreen){this.effect.reset();this.fullScreen=fullScreen;}
     const fixed=this.windowLock.polygon;
     const polygon = fixed?convexHull(fixed.map(p=>this.point(p,settings.mirror))):hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
-    const visible = fullScreen || ((settings.effect!=='none'||!!media) && (!!fixed||!settings.flowers && !settings.pen) && polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002);
+    const windowVisible=(!!fixed||((settings.windowEffect!=='none'||!!media||settings.effectScope==='full')&&!settings.flowers&&!settings.pen))&&polygon.length>=(settings.effectScope==='full'||media?4:3)&&polygonArea(polygon)>=this.canvas.width*this.canvas.height*.002;
+    const visible = fullScreen||windowVisible;
     if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);}
-    else if (visible) {
+    else this.effect.reset();
+    if (windowVisible) {
       c.save(); this.path(polygon); c.clip();
-      if (media) { this.effect.reset(); drawMediaWarp(c,media,polygon); }
-      else this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);
+      if (media) { this.windowEffect.reset(); drawMediaWarp(c,media,polygon); }
+      else this.draw(this.windowEffect.render(video,settings.windowEffect,strength,settings.mirror),settings.mirror);
       c.restore();
-    } else this.effect.reset();
-    if((!fullScreen&&visible)||(fixed&&polygon.length>=3)){
+    } else this.windowEffect.reset();
+    if(windowVisible){
       this.path(polygon); c.strokeStyle = fixed?'#ff4356':'#fff'; c.lineWidth = fixed?3:2; c.stroke();
       const progress=this.windowLock.progress;
       if(progress>0){
@@ -73,12 +88,18 @@ export class WindowRenderer {
       }
       polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle=fixed?'#ff4356':'#fff';c.fill(); });
     }
+    if(this.flash&&performance.now()-this.flash.time<350){
+      c.save();c.strokeStyle='#c4ff61';c.lineWidth=5;
+      if(this.flash.target==='window'&&polygon.length>=3){this.path(polygon);c.stroke();}
+      else c.strokeRect(3,3,this.canvas.width-6,this.canvas.height-6);
+      c.restore();
+    }
     this.flowers.setEnabled(settings.flowers);this.flowers.draw(c,hands,settings.mirror);
     this.pen.setEnabled(settings.pen);this.pen.draw(c,hands,settings.mirror);
 
     return visible;
   }
   clear(): void { this.context.clearRect(0,0,this.canvas.width,this.canvas.height); }
-  reset(): void { this.clear(); this.resetWindow();this.effect.reset(); this.flowers.resetGesture();this.pen.resetGesture(); }
-  dispose(): void { this.clear(); this.effect.dispose();this.flowers.dispose();this.pen.dispose(); }
+  reset(): void { this.clear(); this.resetWindow();this.effect.reset();this.windowEffect.reset();this.flash=null; this.flowers.resetGesture();this.pen.resetGesture(); }
+  dispose(): void { this.clear(); this.effect.dispose();this.windowEffect.dispose();this.flowers.dispose();this.pen.dispose(); }
 }

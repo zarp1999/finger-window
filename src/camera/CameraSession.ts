@@ -32,7 +32,7 @@ export class CameraSession {
   private modeGesture = new EffectModeGesture();
   private modeHolding=false;
 
-  constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect) => void = () => {}, private onPhoto:(canvas:HTMLCanvasElement)=>void = ()=>{}, _onScope:(scope:EffectScope)=>void = ()=>{}) {
+  constructor(private video: HTMLVideoElement, private canvas: HTMLCanvasElement, private onChange: (state: CameraState) => void, private onEffect: (effect: Effect,target:EffectScope) => void = () => {}, private onPhoto:(canvas:HTMLCanvasElement)=>void = ()=>{}, _onScope:(scope:EffectScope)=>void = ()=>{}) {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(this.sourceFrame);
   }
   setSettings(settings: Settings): void {
@@ -98,13 +98,15 @@ export class CameraSession {
         if (this.video.currentTime !== this.lastVideo && time-this.lastDetection >= 33) {
           this.lastVideo = this.video.currentTime; this.lastDetection = time;
           this.hands = this.tracker.detect(this.video, time);
-          this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,this.settings.effectScope==='window'&&(this.settings.effect!=='none'||!!this.media)&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
+          this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,(this.settings.windowEffect!=='none'||!!this.media||this.settings.effectScope==='full')&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
           const pinchEnabled=!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
-          const gesture=pinchEnabled?this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight):{next:false};
+          const gesture=pinchEnabled?this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight):{next:false,point:null};
           if(!pinchEnabled)this.gestures.reset();
           if(gesture.next){
-            const effect=EFFECTS[(EFFECTS.indexOf(this.settings.effect)+1)%EFFECTS.length];
-            this.settings={...this.settings,effect};this.onEffect(effect);
+            const target:EffectScope=this.settings.effectScope==='window'||(gesture.point&&this.renderer.insideWindow(gesture.point))?'window':'full';
+            const key=target==='window'?'windowEffect':'effect';
+            const effect=EFFECTS[(EFFECTS.indexOf(this.settings[key])+1)%EFFECTS.length];
+            this.settings={...this.settings,[key]:effect};this.renderer.flashTarget(target,time);this.onEffect(effect,target);
           }
           this.renderer.updateFlowers(this.hands,time,this.settings);
           this.publish({ flowerCount:this.renderer.flowerCount,flowerPaused:this.renderer.flowerPaused,penCount:this.renderer.penCount,penPaused:this.renderer.penPaused });

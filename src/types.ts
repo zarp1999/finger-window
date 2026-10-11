@@ -11,7 +11,7 @@ export interface WindowMedia {
 }
 export type EffectScope = 'window' | 'full';
 export type StickerSet='flowers'|'sparkles'|'hearts'|'space';
-export interface Settings { effect: Effect; mirror: boolean; flowers: boolean; stickerSet:StickerSet; pen:boolean; penColor:string; penSize:number; autoPhoto: boolean; photoCount:1|3; effectScope: EffectScope }
+export interface Settings { effect: Effect; windowEffect:Effect; mirror: boolean; flowers: boolean; stickerSet:StickerSet; pen:boolean; penColor:string; penSize:number; autoPhoto: boolean; photoCount:1|3; effectScope: EffectScope }
 export interface CameraState {
   phase: 'idle' | 'loading' | 'live' | 'error';
   hands: number;
@@ -27,7 +27,7 @@ export interface CameraState {
   message: TranslationKey;
   hint: TranslationKey;
 }
-export const DEFAULT_SETTINGS: Settings = { effect: 'thermal', mirror: true, flowers: false, stickerSet:'flowers',pen:false,penColor:'#ffda73',penSize:5,autoPhoto: true, photoCount:1, effectScope:'window' };
+export const DEFAULT_SETTINGS: Settings = { effect: 'thermal',windowEffect:'thermal', mirror: true, flowers: false, stickerSet:'flowers',pen:false,penColor:'#ffda73',penSize:5,autoPhoto: true, photoCount:1, effectScope:'window' };
 export const INITIAL_STATE: CameraState = {
   phase: 'idle', hands: 0, fps: 0, flowerCount: 0, flowerPaused:false,penCount:0,penPaused:false, photoCountdown: null, photoLocked: false, photoShot:null,photoFlash:0,
   message: 'ready', hint: 'initialHint',

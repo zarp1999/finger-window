@@ -16,8 +16,9 @@ import { useLanguage } from './hooks/useLanguage';
 type Sheet='effects'|'options'|'help'|'saved'|null;
 export function App() {
   const [settings,setSettings]=useState(DEFAULT_SETTINGS),[sheet,setSheet]=useState<Sheet>(null);
+  const [effectTarget,setEffectTarget]=useState<'window'|'full'>('window');
   const photo=usePhoto();
-  const camera=useHandCamera(settings,effect=>setSettings(previous=>({...previous,effect})),photo.capture,scope=>setSettings(previous=>({...previous,effectScope:scope})));
+  const camera=useHandCamera(settings,(effect,target)=>setSettings(previous=>({...previous,[target==='window'?'windowEffect':'effect']:effect})),photo.capture,scope=>setSettings(previous=>({...previous,effectScope:scope})));
   const content=useWindowMedia(camera.state.phase==='live');
   const recording=useRecording(camera.canvasRef,camera.state.phase==='live',content.media);
   useEffect(()=>{camera.setMedia(content.media);if(content.media)setSettings(previous=>({...previous,flowers:false,pen:false}));},[camera.setMedia,content.media]);
@@ -25,9 +26,9 @@ export function App() {
   useEffect(()=>{if(recording.state.url)setSheet('saved');},[recording.state.url]);
   useEffect(()=>{if(photo.error)setSheet('saved');},[photo.error]);
   const {language,setLanguage,t}=useLanguage();
-  useWebMcp({state:camera.state,settings,onEffect:effect=>{content.clear();setSettings(previous=>({...previous,effect,flowers:false,pen:false}));},onStop:camera.stop});
+  useWebMcp({state:camera.state,settings,onEffect:effect=>{content.clear();setSettings(previous=>({...previous,[previous.effectScope==='window'?'windowEffect':'effect']:effect,flowers:false,pen:false}));},onStop:camera.stop});
   const sheetTitle=t(sheet==='effects'?'effect':sheet==='help'?'howTo':sheet==='saved'?'savedMedia':'controls');
-  const currentEffect=settings.pen?t('penMode')+(camera.state.penPaused?' · '+t('flowersPaused'):''):settings.flowers?t(settings.stickerSet==='flowers'?'flowerMode':settings.stickerSet)+(camera.state.flowerPaused?' · '+t('flowersPaused'):''):content.media?content.media.name:t(settings.effect);
+  const currentEffect=settings.pen?t('penMode')+(camera.state.penPaused?' · '+t('flowersPaused'):''):settings.flowers?t(settings.stickerSet==='flowers'?'flowerMode':settings.stickerSet)+(camera.state.flowerPaused?' · '+t('flowersPaused'):''):content.media?content.media.name:t(settings.effectScope==='window'?settings.windowEffect:settings.effect);
   return <div className={`app compact-app camera-app${camera.state.phase==='live'?' live':''}`}>
 
     <main>
@@ -36,13 +37,13 @@ export function App() {
         {(photo.busy||recording.state.phase==='stopping'||recording.state.message)&&<div className="camera-notice" role="status">{t(photo.busy?'photoPreparing':recording.state.phase==='stopping'?'recordFinishing':recording.state.message!)}</div>}
       </section>
       <QuickControls settings={settings} state={camera.state} photo={photo} recording={recording} effectLabel={(settings.flowers||settings.pen)&&settings.effectScope==='full'?t(settings.effect)+' · '+currentEffect:currentEffect} onSettings={setSettings} onCapture={camera.capturePhoto}
-        onEffects={()=>setSheet('effects')} onOptions={()=>setSheet('options')} onHelp={()=>setSheet('help')} onSaved={()=>setSheet('saved')}
+        onEffects={()=>{setEffectTarget(settings.effectScope);setSheet('effects');}} onOptions={()=>setSheet('options')} onHelp={()=>setSheet('help')} onSaved={()=>setSheet('saved')}
         onPen={()=>{content.clear();setSettings(previous=>({...previous,pen:!previous.pen,flowers:false}));}} onFlowers={()=>{content.clear();setSettings(previous=>({...previous,flowers:!previous.flowers,pen:false}));}} t={t}/>
     </main>
     <BottomSheet open={sheet!==null} title={sheetTitle} closeLabel={t('close')} onClose={()=>setSheet(null)}>
-      {sheet==='effects'&&<div className="effects" role="group" aria-label={t('effectGroup')}>{EFFECTS.map(effect=>
-        <button key={effect} className={`effect${settings.effect===effect&&!settings.flowers&&!settings.pen&&!content.media?' active':''}`} data-effect={effect} aria-pressed={settings.effect===effect&&!settings.flowers&&!settings.pen&&!content.media} onClick={()=>{content.clear();setSettings(previous=>({...previous,effect,flowers:false,pen:false}));setSheet(null);}}><span className={`swatch ${effect}`}/>{t(effect)}</button>
-      )}</div>}
+      {sheet==='effects'&&<><div className="editor-actions">{(['full','window'] as const).map(target=><button key={target} aria-pressed={effectTarget===target} onClick={()=>setEffectTarget(target)}>{t(target==='full'?'fullMode':'windowMode')}</button>)}</div><div className="effects" role="group" aria-label={t('effectGroup')}>{EFFECTS.map(effect=>
+        <button key={effect} className={`effect${settings[effectTarget==='window'?'windowEffect':'effect']===effect&&!settings.flowers&&!settings.pen&&!content.media?' active':''}`} data-effect={effect} aria-pressed={settings[effectTarget==='window'?'windowEffect':'effect']===effect&&!settings.flowers&&!settings.pen&&!content.media} onClick={()=>{content.clear();setSettings(previous=>({...previous,[effectTarget==='window'?'windowEffect':'effect']:effect,flowers:false,pen:false}));setSheet(null);}}><span className={`swatch ${effect}`}/>{t(effect)}</button>
+      )}</div></>}
       {sheet==='options'&&<>
         <div className="language-switch settings-language" role="group" aria-label={t('language')}><button lang="ja" aria-pressed={language==='ja'} onClick={()=>setLanguage('ja')}>日本語</button><button lang="mn" aria-pressed={language==='mn'} onClick={()=>setLanguage('mn')}>Монгол</button></div>
         <section className="sheet-section">
