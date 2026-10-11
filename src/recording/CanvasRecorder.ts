@@ -16,6 +16,7 @@ export class CanvasRecorder {
   private chunks: Blob[] = [];
   private bytes = 0;
   private timer = 0;
+  private frameTimer=0;
   private started = 0;
   private state = EMPTY_RECORDING;
   private disposed = false;
@@ -58,9 +59,19 @@ export class CanvasRecorder {
     if(!recordingSupported()){this.publish({message:'recordUnsupported'});return;}
     this.publish({message:null});
     try{
-      this.stream=canvas.captureStream(30);
-      this.initializeAudio().forEach(track=>this.stream!.addTrack(track));
-      const types=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+      // Feed a stable recording canvas even when the preview has no new hand or camera frame.
+      const frame=document.createElement('canvas');frame.width=canvas.width;frame.height=canvas.height;
+      const context=frame.getContext('2d');if(!context)throw Error('canvas');
+      const paint=()=>{
+        const scale=Math.min(frame.width/canvas.width,frame.height/canvas.height);
+        context.fillStyle='#000';context.fillRect(0,0,frame.width,frame.height);
+        context.drawImage(canvas,(frame.width-canvas.width*scale)/2,(frame.height-canvas.height*scale)/2,canvas.width*scale,canvas.height*scale);
+      };
+      paint();this.stream=frame.captureStream(30);
+      const track=this.stream.getVideoTracks()[0] as MediaStreamTrack & {requestFrame?:()=>void};
+      const captureFrame=()=>{paint();track.requestFrame?.();};
+      if(this.video)this.initializeAudio().forEach(track=>this.stream!.addTrack(track));
+      const types=['video/webm;codecs=vp8,opus','video/webm;codecs=vp9,opus','video/webm','video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4'];
       let recorder:MediaRecorder|null=null;
       for(const mimeType of [...types.filter(type=>MediaRecorder.isTypeSupported(type)),'']){
         try{recorder=new MediaRecorder(this.stream,{...(mimeType?{mimeType}:{}),videoBitsPerSecond:2500000});break;}catch{/* Try another supported encoder. */}
@@ -74,6 +85,7 @@ export class CanvasRecorder {
       recorder.onerror=()=>{this.publish({message:'recordFailed'});this.stop();};
       recorder.onstop=()=>this.finish(recorder);
       recorder.start(1000);
+      captureFrame();this.frameTimer=window.setInterval(captureFrame,1000/30);
       if(this.state.url)URL.revokeObjectURL(this.state.url);
       this.started=performance.now();this.publish({phase:'recording',seconds:0,url:null,file:null});
       this.timer=window.setInterval(()=>{
@@ -86,7 +98,7 @@ export class CanvasRecorder {
   }
   stop():void {
     if(!this.recorder||this.state.phase==='stopping')return;
-    clearInterval(this.timer);this.publish({phase:'stopping'});
+    clearInterval(this.timer);clearInterval(this.frameTimer);this.publish({phase:'stopping'});
     if(this.recorder.state!=='inactive')this.recorder.stop();
   }
   private finish(recorder:MediaRecorder):void {
@@ -100,7 +112,7 @@ export class CanvasRecorder {
     const file=new File([blob],name,{type});
     this.publish({phase:'ready',file,url:URL.createObjectURL(file)});
   }
-  private cleanupTracks():void {this.stream?.getTracks().forEach(track=>track.stop());this.stream=null;}
+  private cleanupTracks():void {clearInterval(this.frameTimer);this.stream?.getTracks().forEach(track=>track.stop());this.stream=null;}
   dispose():void {
     this.disposed=true;clearInterval(this.timer);
     if(this.recorder?.state!=='inactive')this.recorder?.stop();this.cleanupTracks();
