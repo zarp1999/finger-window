@@ -15,8 +15,10 @@ interface Props {
   onToggleScope:()=>void;
   zoom:number;
   onZoom:(zoom:number)=>void;
+  windowEnabled:boolean;
+  onToggleWindow:()=>void;
 }
-export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, effectScope, onToggleScope,zoom,onZoom }: Props) {
+export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, effectScope, onToggleScope,zoom,onZoom,windowEnabled,onToggleWindow }: Props) {
   const live = state.phase === 'live', loading = state.phase === 'loading';
   const [flash,setFlash]=useState(false);
   const touches=useRef(new Map<number,{x:number;y:number}>());
@@ -46,7 +48,7 @@ export function CameraStage({ videoRef, canvasRef, state, onStart, onStop, t, ef
     {flash&&<div key={state.photoFlash} id="shutterFlash" className="shutter-flash" aria-hidden="true"/>}
     {live&&state.photoCountdown!==null&&<div id="photoCountdown" className="photo-countdown" role="status" aria-live="assertive" aria-atomic="true"><span key={state.photoCountdown}>{state.photoCountdown}</span></div>}
     <div className="stage-top"><span id="modeLabel">{t(live ? 'live' : 'standby')}</span><span id="fps">{state.fps || '—'} FPS</span></div>
-    {live&&effectScope&&<button type="button" id="effectScope" className="effect-scope" onClick={onToggleScope} aria-pressed={effectScope==='full'}>{t(effectScope==='full'?'fullMode':'windowMode')}</button>}
+    {live&&<div className="camera-mode-controls">{effectScope&&<button type="button" id="effectScope" className="effect-scope" onClick={onToggleScope} aria-pressed={effectScope==='full'}>{t(effectScope==='full'?'fullMode':'windowMode')}</button>}<button type="button" id="windowToggle" className="window-toggle" onClick={onToggleWindow} aria-pressed={windowEnabled}>{t(windowEnabled?'windowOn':'windowOff')}</button></div>}
     {(live||loading)&&<button id="stop" className="camera-stop" onClick={onStop} aria-label={t('stop')} title={t('stop')}><span aria-hidden="true">×</span></button>}
     <div id="welcome" className="welcome" hidden={live}>
       <span className="window-icon" aria-hidden="true" /><h2>{t('welcome')}</h2>

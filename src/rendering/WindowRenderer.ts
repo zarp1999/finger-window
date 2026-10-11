@@ -66,7 +66,7 @@ export class WindowRenderer {
     if(fullScreen!==this.fullScreen){this.effect.reset();this.fullScreen=fullScreen;}
     const fixed=this.windowLock.polygon;
     const polygon = fixed?convexHull(fixed.map(p=>this.point(p,settings.mirror))):hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
-    const windowVisible=(!!fixed||(!settings.flowers&&!settings.pen))&&polygon.length>=(settings.effectScope==='full'||media?4:3)&&polygonArea(polygon)>=this.canvas.width*this.canvas.height*.002;
+    const windowVisible=settings.windowEnabled&&(!!fixed||(!settings.flowers&&!settings.pen))&&polygon.length>=(settings.effectScope==='full'||media?4:3)&&polygonArea(polygon)>=this.canvas.width*this.canvas.height*.002;
     const visible = fullScreen||windowVisible;
     if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);}
     else this.effect.reset();

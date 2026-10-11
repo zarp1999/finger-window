@@ -33,7 +33,7 @@ export function App() {
 
     <main>
       <section className="camera-area" aria-label={t('workspace')}>
-        <CameraStage zoom={settings.zoom} onZoom={zoom=>setSettings(previous=>({...previous,zoom}))} videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} onToggleScope={()=>setSettings(previous=>({...previous,effectScope:previous.effectScope==='full'?'window':'full'}))} effectScope={!content.media&&(!settings.flowers&&!settings.pen||settings.effectScope==='full')?settings.effectScope:null}/>
+        <CameraStage windowEnabled={settings.windowEnabled} onToggleWindow={()=>setSettings(previous=>({...previous,windowEnabled:!previous.windowEnabled}))} zoom={settings.zoom} onZoom={zoom=>setSettings(previous=>({...previous,zoom}))} videoRef={camera.videoRef} canvasRef={camera.canvasRef} state={camera.state} onStart={camera.start} onStop={camera.stop} t={t} onToggleScope={()=>setSettings(previous=>({...previous,effectScope:previous.effectScope==='full'?'window':'full'}))} effectScope={!content.media&&(!settings.flowers&&!settings.pen||settings.effectScope==='full')?settings.effectScope:null}/>
         {(photo.busy||recording.state.phase==='stopping'||recording.state.message)&&<div className="camera-notice" role="status">{t(photo.busy?'photoPreparing':recording.state.phase==='stopping'?'recordFinishing':recording.state.message!)}</div>}
       </section>
       <QuickControls settings={settings} state={camera.state} photo={photo} recording={recording} effectLabel={(settings.flowers||settings.pen)&&settings.effectScope==='full'?t(settings.effect)+' · '+currentEffect:currentEffect} onSettings={setSettings} onCapture={camera.capturePhoto}

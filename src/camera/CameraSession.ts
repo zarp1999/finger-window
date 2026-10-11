@@ -37,7 +37,7 @@ export class CameraSession {
   }
   setSettings(settings: Settings): void {
     if(settings.mirror!==this.settings.mirror)this.renderer.resetWindow();
-    if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror||settings.flowers||settings.pen)this.gestures.reset();
+    if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror||settings.windowEnabled!==this.settings.windowEnabled||settings.flowers||settings.pen)this.gestures.reset();
     if(settings.photoCount!==this.settings.photoCount||(!settings.autoPhoto&&this.settings.autoPhoto)){this.cancelPhoto();}
     if(settings.autoPhoto!==this.settings.autoPhoto){this.photoGesture.reset();this.publish({photoCountdown:null,photoLocked:false});}
     this.settings = settings;
@@ -98,12 +98,12 @@ export class CameraSession {
         if (this.video.currentTime !== this.lastVideo && time-this.lastDetection >= 33) {
           this.lastVideo = this.video.currentTime; this.lastDetection = time;
           this.hands = this.tracker.detect(this.video, time);
-          this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
-          const pinchEnabled=!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
+          this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,this.settings.windowEnabled&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
+          const pinchEnabled=(this.settings.windowEnabled||this.settings.effectScope==='full')&&!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
           const gesture=pinchEnabled?this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight):{next:false,point:null};
           if(!pinchEnabled)this.gestures.reset();
           if(gesture.next){
-            const target:EffectScope=this.settings.effectScope==='window'||(gesture.point&&this.renderer.insideWindow(gesture.point))?'window':'full';
+            const target:EffectScope=this.settings.windowEnabled&&(this.settings.effectScope==='window'||(gesture.point&&this.renderer.insideWindow(gesture.point)))?'window':'full';
             const key=target==='window'?'windowEffect':'effect';
             const effect=EFFECTS[(EFFECTS.indexOf(this.settings[key])+1)%EFFECTS.length];
             this.settings={...this.settings,[key]:effect};this.renderer.flashTarget(target,time);this.onEffect(effect,target);

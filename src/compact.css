@@ -150,3 +150,7 @@ html,body,#root{width:100%;height:100%;overflow:hidden}
 
 .camera-app.compact-app #output{touch-action:none}
 .camera-app .camera-zoom{position:absolute;left:16px;top:76px;z-index:5;min-width:48px;min-height:44px;border:1px solid #ffffff25;border-radius:22px;background:#11151d85;color:#fff;font-size:12px;padding:8px;touch-action:manipulation}
+
+.camera-app .camera-mode-controls{position:absolute;top:max(14px,env(safe-area-inset-top));left:64px;right:max(12px,env(safe-area-inset-right));z-index:5;display:flex;justify-content:center;gap:6px;pointer-events:none}
+.camera-app.compact-app .camera-mode-controls button{position:static;transform:none;min-height:44px;max-width:65%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:auto;border:1px solid #ffffff25;border-radius:22px;background:#11151d85;color:#fff;font-size:11px;padding:8px 12px;touch-action:manipulation}
+.camera-app .camera-mode-controls .window-toggle[aria-pressed=true]{color:var(--lime);border-color:#c4ff6160}
