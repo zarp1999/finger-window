@@ -119,7 +119,7 @@ export class CameraSession {
           }
         }
         const visible = this.renderer.render(this.video,this.hands,this.settings,.7,this.media);
-        drawCameraPreview(this.sourceFrame,this.canvas,this.canvas.clientWidth||this.sourceFrame.width,this.canvas.clientHeight||this.sourceFrame.height);
+        drawCameraPreview(this.sourceFrame,this.canvas,this.canvas.clientWidth||this.sourceFrame.width,this.canvas.clientHeight||this.sourceFrame.height,this.settings.zoom);
         if(!document.hidden&&(takePhoto||this.photoStrip.due(time)))this.takePhoto(time);
         const count = this.hands.length;
         const fullScreen=this.settings.effectScope==='full'&&!this.media;

@@ -1,5 +1,6 @@
 export type Language = 'ja' | 'mn';
 const ja = {
+ zoom:'ズーム',zoomReset:'ズームを1倍に戻す',
  windowLockHelp:'両手で窓を作り3秒動かさず保つと、白い枠を赤い線が一周して固定します。一度手を離し、もう一度窓を作って3秒保つと解除します。固定した窓には花やペンも重ねられます。',editPhoto:'写真を編集',editMove:'移動',editDraw:'落書き',editUndo:'取り消し',editDelete:'削除',editText:'文字を入力',editAdd:'追加',editSize:'大きさ',editRotate:'回転',editApply:'編集を適用',editCancel:'キャンセル',
  stickers:'指先スタンプ',sparkles:'キラキラ',hearts:'ハート',space:'宇宙',stickerHelp:'設定で花・キラキラ・ハート・宇宙を選び、人差し指を動かすと順番に残ります。左手を約0.4秒握ると停止・再開。右手を握ると落ちながら消えます。セットを変えても描いたスタンプは残り、写真・録画にも入ります。',
  none:'エフェクトなし',retro:'Retro Photo Booth',
@@ -22,6 +23,7 @@ const ja = {
 };
 export type TranslationKey = keyof typeof ja;
 const mn: Record<TranslationKey,string> = {
+ zoom:'Томруулах',zoomReset:'1 дахин болгох',
  windowLockHelp:'Хоёр гараар цонх үүсгээд 3 секунд хөдөлгөөнгүй барина. Цагаан хүрээ улаанаар бүтэн тойроход цонх тогтоно. Гараа нэг удаа буулгаад дахин цонх үүсгэж 3 секунд баривал суллана. Тогтсон цонхон дээр тамга, үзгээр зурж болно.',editPhoto:'Зураг засах',editMove:'Зөөх',editDraw:'Зурах',editUndo:'Буцаах',editDelete:'Устгах',editText:'Текст оруулах',editAdd:'Нэмэх',editSize:'Хэмжээ',editRotate:'Эргүүлэх',editApply:'Засварыг хадгалах',editCancel:'Цуцлах',
  stickers:'Хурууны тамга',sparkles:'Гялалзах од',hearts:'Зүрх',space:'Сансар',stickerHelp:'Тохиргооноос цэцэг, гялалзах од, зүрх, сансар сонгоод долоовор хуруугаа хөдөлгөхөд ээлжлэн үлдэнэ. Зүүн гараа 0.4 секунд атгахад зогсох, үргэлжлүүлэх; баруун гараа атгахад доош унан арилна. Төрлөө сольсон ч зурсан тамга үлдэж, зураг болон бичлэгт орно.',
  none:'Эффектгүй',retro:'Retro Photo Booth',
