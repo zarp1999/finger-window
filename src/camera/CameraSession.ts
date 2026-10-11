@@ -98,7 +98,7 @@ export class CameraSession {
         if (this.video.currentTime !== this.lastVideo && time-this.lastDetection >= 33) {
           this.lastVideo = this.video.currentTime; this.lastDetection = time;
           this.hands = this.tracker.detect(this.video, time);
-          this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,(this.settings.windowEffect!=='none'||!!this.media||this.settings.effectScope==='full')&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
+          this.renderer.updateWindow(this.hands,time,this.video.videoWidth/this.video.videoHeight,!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight));
           const pinchEnabled=!this.media&&!this.settings.flowers&&!this.settings.pen&&!this.modeHolding&&!document.hidden&&this.state.photoCountdown===null&&!this.photoStrip.active&&!photoPose(this.hands,this.video.videoWidth/this.video.videoHeight);
           const gesture=pinchEnabled?this.gestures.update(this.hands,time,this.video.videoWidth/this.video.videoHeight):{next:false,point:null};
           if(!pinchEnabled)this.gestures.reset();
