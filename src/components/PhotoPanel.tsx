@@ -23,10 +23,10 @@ export function PhotoPanel({photo,state,settings,onSettings,onCapture,t,resultOn
     </>}
     {photo.busy&&<p className="note" role="status">{t('photoPreparing')}</p>}
     {photo.result&&<div className="photo-result"><img id="photoPreview" className="photo-preview" src={photo.result.url} alt={t('photoPreview')}/>
-      <p className="note" role="status">{t('photoReady')}</p><button id="photoEdit" className="secondary" disabled={photo.busy||photo.sharing} onClick={()=>setEditing(true)}>{t('editPhoto')}</button>
+      <button id="photoEdit" className="secondary" disabled={photo.busy||photo.sharing} onClick={()=>setEditing(true)}>{t('editPhoto')}</button>
       <div className="media-actions"><a id="photoDownload" className="secondary" href={photo.result.url} download={photo.result.file.name}>{t('photoDownload')}</a>
       {photo.canShare&&<button id="photoShare" className="secondary" disabled={photo.sharing||photo.busy} onClick={()=>void photo.share()}>{t('recordShare')}</button>}</div>
-      <p className="note">{t('photoSaveHelp')}</p></div>}
+      </div>}
     {photo.error&&<p className="status error" role="alert">{t(photo.error)}</p>}
   </section>;
 }
