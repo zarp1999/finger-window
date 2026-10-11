@@ -36,7 +36,7 @@ export class CameraSession {
     this.source = new CameraSource(video); this.renderer = new WindowRenderer(this.sourceFrame);
   }
   setSettings(settings: Settings): void {
-    if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror)this.renderer.resetWindow();
+    if(settings.mirror!==this.settings.mirror)this.renderer.resetWindow();
     if(settings.effectScope!==this.settings.effectScope||settings.mirror!==this.settings.mirror||settings.flowers||settings.pen)this.gestures.reset();
     if(settings.photoCount!==this.settings.photoCount||(!settings.autoPhoto&&this.settings.autoPhoto)){this.cancelPhoto();}
     if(settings.autoPhoto!==this.settings.autoPhoto){this.photoGesture.reset();this.publish({photoCountdown:null,photoLocked:false});}

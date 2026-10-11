@@ -51,7 +51,7 @@ export class WindowRenderer {
     this.clear(); this.draw(video, settings.mirror);
     const fullScreen=settings.effect!=='none'&&settings.effectScope==='full'&&!media;
     if(fullScreen!==this.fullScreen){this.effect.reset();this.fullScreen=fullScreen;}
-    const fixed=settings.effectScope==='window'?this.windowLock.polygon:null;
+    const fixed=this.windowLock.polygon;
     const polygon = fixed?convexHull(fixed.map(p=>this.point(p,settings.mirror))):hands.length === 2 ? convexHull(hands.flatMap(h => [this.point(h[4],settings.mirror), this.point(h[8],settings.mirror)])) : [];
     const visible = fullScreen || ((settings.effect!=='none'||!!media) && (!!fixed||!settings.flowers && !settings.pen) && polygon.length >= (media ? 4 : 3) && polygonArea(polygon) >= this.canvas.width*this.canvas.height*.002);
     if(fullScreen){this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);}
@@ -60,6 +60,8 @@ export class WindowRenderer {
       if (media) { this.effect.reset(); drawMediaWarp(c,media,polygon); }
       else this.draw(this.effect.render(video,settings.effect,strength,settings.mirror),settings.mirror);
       c.restore();
+    } else this.effect.reset();
+    if((!fullScreen&&visible)||(fixed&&polygon.length>=3)){
       this.path(polygon); c.strokeStyle = fixed?'#ff4356':'#fff'; c.lineWidth = fixed?3:2; c.stroke();
       const progress=this.windowLock.progress;
       if(progress>0){
@@ -70,7 +72,7 @@ export class WindowRenderer {
         c.strokeStyle=fixed?'#fff':'#ff4356';c.lineWidth=4;c.stroke();
       }
       polygon.forEach(p => { c.beginPath(); c.arc(p.x,p.y,4,0,Math.PI*2); c.fillStyle=fixed?'#ff4356':'#fff';c.fill(); });
-    } else this.effect.reset();
+    }
     this.flowers.setEnabled(settings.flowers);this.flowers.draw(c,hands,settings.mirror);
     this.pen.setEnabled(settings.pen);this.pen.draw(c,hands,settings.mirror);
 
